@@ -31,12 +31,7 @@ class BoundingBox:
         return (self.south_west_lon + self.north_east_lon) / 2
 
     def to_overpass_bbox(self) -> str:
-        return (
-            f"{self.south_west_lat},"
-            f"{self.south_west_lon},"
-            f"{self.north_east_lat},"
-            f"{self.north_east_lon}"
-        )
+        return f"{self.south_west_lon},{self.south_west_lat},{self.north_east_lon},{self.north_east_lat}"
 
     def to_here_bbox(self) -> str:
         return f"bbox:{self.south_west_lon},{self.south_west_lat},{self.north_east_lon},{self.north_east_lat}"
