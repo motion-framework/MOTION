@@ -1,4 +1,4 @@
-# Traffic Modelling and Prediction of Hazardous Behaviours
+# Traffic Modelling
 # Using CARLA Simulator and OpenStreetMap
 
 A thesis project that mirrors real-world traffic from the HERE Traffic API
