@@ -1,4 +1,4 @@
-# Traffic Modelling
+# Traffic Modelling and Prediction of Hazardous Behaviours
 # Using CARLA Simulator and OpenStreetMap
 
 A thesis project that mirrors real-world traffic from the HERE Traffic API
@@ -143,6 +143,15 @@ All commands from this point forward assume you are in this directory.
 
 ## Step 4: Install Python Dependencies
 
+In the project root
+`py -3.12 -m venv venv`
+to use a virtual environment.
+
+then
+`cd venv` -> `cd Scripts` -> `activate.bat`
+
+then cd to where the requirements.txt is located.
+
 This project uses several Python libraries. 
 Install them all at once:
 pip install -r requirements.txt
@@ -161,15 +170,11 @@ You need to install it from the file that came with CARLA.
    `carla-0.9.16-cp310-cp310-win_amd64.whl`
    (the `cp310` part must match your Python version: `cp310` for
    Python 3.10, `cp311` for 3.11, `cp312` for 3.12).
-4. Install it:
+4. Verify the python version `python --version`
+5. Install it:
 pip install C:\CARLA_0.9.16\PythonAPI\carla\dist\carla-0.9.16-cp312-cp312-win_amd64.whl
 
 Adjust the path and filename to match your setup.
-
-To verify it worked:
-python -c "import carla; print(carla.file)"
-
-If it prints a file path without errors, the CARLA API is installed.
 
 ---
 
@@ -272,8 +277,6 @@ python run_traffic_mirror.py --lat 40.6772 --lon 14.7604 --radius 400 --geo --ch
 To see visual markers in the CARLA window:
 
 python run_traffic_mirror.py --lat 40.6772 --lon 14.7604 --radius 400 --geo --verify-calibration
-
-
 
 
 ### Recording HERE Data for Thesis Evidence
@@ -470,6 +473,13 @@ Run: `pip install python-dotenv`
 ### "ModuleNotFoundError: No module named 'pyproj'"
 
 Run: `pip install pyproj`
+
+### "pj_obj_create: Cannot find proj.db"
+
+Find the path of `venv\Lib\site-packages\pyproj\proj_dir\share\proj`
+
+Run: `set PROJ_DATA=C:\...\venv\Lib\site-packages\pyproj\proj_dir\share\proj`
+Run: `set PROJ_LIB=C:\...\venv\Lib\site-packages\pyproj\proj_dir\share\proj`
 
 ### "ValueError: HERE_API_KEY is not set"
 
