@@ -1,0 +1,11 @@
+--- Real-Time validation log for Salerno scenario ---
+Timestamp: Fri Jul 17 00:07:48 2026
+Test duration: 0.61 minutes
+----------------------------------------
+Total AI alerts: 1
+Confirmed incidents (TP): 0
+False alarms (FP): 1
+Mean Inference Latency: 6.91 ms
+Safety Margin for T=0.5s: 493.09 ms
+Current real-time precision: 0.00%
+----------------------------------------
