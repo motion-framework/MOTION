@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<OpenDRIVE>
+  <road name="baseline" length="10.0" id="1" junction="-1">
+    <planView>
+      <geometry s="0" x="0" y="0" hdg="0" length="0"><line/></geometry>
+      <geometry s="0" x="0" y="0" hdg="0" length="10"><line/></geometry>
+    </planView>
+    <objects>
+      <object id="1" type="crosswalk" s="10.5"></object>
+    </objects>
+  </road>
+</OpenDRIVE>

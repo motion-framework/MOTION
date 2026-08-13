@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<osm version="0.6">
+  <bounds minlat="40.0" minlon="14.0" maxlat="40.01" maxlon="14.01"/>
+  <node id="1" lat="40.000" lon="14.000"/>
+  <node id="2" lat="40.001" lon="14.001"/>
+  <node id="3" lat="40.002" lon="14.002"/>
+  <way id="10">
+    <nd ref="1"/>
+    <nd ref="2"/>
+    <tag k="highway" v="residential"/>
+  </way>
+  <way id="11">
+    <nd ref="3"/>
+    <tag k="building" v="yes"/>
+  </way>
+</osm>

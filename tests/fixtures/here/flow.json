@@ -1,0 +1,46 @@
+{
+  "sourceUpdated": "2026-08-11T10:00:00Z",
+  "results": [
+    {
+      "currentFlow": {
+        "speed": 10.0,
+        "freeFlow": 20.0,
+        "jamFactor": 4.5,
+        "confidence": 0.8,
+        "subSegments": [
+          {
+            "length": 60.0,
+            "speed": 8.0,
+            "freeFlow": 18.0,
+            "jamFactor": 6.0,
+            "confidence": 0.75
+          }
+        ]
+      },
+      "location": {
+        "description": "Via Baseline",
+        "length": 100.0,
+        "shape": {
+          "links": [
+            {
+              "functionalClass": 3,
+              "points": [
+                {"lat": 40.0000, "lng": 14.0000},
+                {"lat": 40.0005, "lng": 14.0000},
+                {"lat": 40.0010, "lng": 14.0000}
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "currentFlow": {"freeFlow": 5.0},
+      "location": {"description": "Fallback Road", "length": 2.0, "shape": {}}
+    },
+    {
+      "currentFlow": {},
+      "location": {"description": "Skipped Road", "shape": {}}
+    }
+  ]
+}
