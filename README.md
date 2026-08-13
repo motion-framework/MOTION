@@ -1,7 +1,9 @@
-# Traffic Mirror
+# MOTION– sMart lighting tO improve safety and electricity cOnsumptioN
 
 Research software for reproducing observed road traffic in CARLA and for
 experimenting with vehicle-level behavioral risk analysis in the MOTION project.
+
+# Traffic Mirror - UC01
 
 Traffic Mirror turns a selected HERE-covered road into a validated
 OSM/OpenDRIVE map, loads that map in CARLA, and synchronises the population and
