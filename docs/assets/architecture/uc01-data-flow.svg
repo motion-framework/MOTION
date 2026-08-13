@@ -1,0 +1,75 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="900" viewBox="0 0 1280 900" role="img" aria-labelledby="title description">
+  <title id="title">UC-01 data flow</title>
+  <desc id="description">Sequence diagram showing CLI composition, UC-01 preparation, device and HERE polling, CARLA synchronization, and tick reporting.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#475569"/>
+    </marker>
+    <style>
+      .actor { fill: #f8fafc; stroke: #334155; stroke-width: 1.5; }
+      .service { fill: #e0f2fe; stroke: #0369a1; stroke-width: 1.5; }
+      .lifeline { stroke: #94a3b8; stroke-width: 1.3; stroke-dasharray: 7 7; }
+      .message { fill: none; stroke: #475569; stroke-width: 1.6; marker-end: url(#arrow); }
+      .reply { fill: none; stroke: #475569; stroke-width: 1.6; stroke-dasharray: 7 5; marker-end: url(#arrow); }
+      .loop { fill: #f8fafc; fill-opacity: 0.55; stroke: #64748b; stroke-width: 1.4; }
+      .loop-label { fill: #e2e8f0; stroke: #64748b; stroke-width: 1.2; }
+      text { fill: #0f172a; font-family: Inter, "Segoe UI", Arial, sans-serif; font-size: 16px; }
+      .actor-text { font-weight: 600; text-anchor: middle; }
+      .message-text { text-anchor: middle; font-size: 15px; }
+      .loop-text { font-weight: 600; font-size: 14px; }
+    </style>
+  </defs>
+
+  <rect width="1280" height="900" fill="#ffffff"/>
+  <rect class="actor" x="35" y="25" width="150" height="52" rx="7"/>
+  <rect class="actor" x="275" y="25" width="150" height="52" rx="7"/>
+  <rect class="actor" x="515" y="25" width="150" height="52" rx="7"/>
+  <rect class="service" x="765" y="25" width="170" height="52" rx="7"/>
+  <rect class="actor" x="1035" y="25" width="170" height="52" rx="7"/>
+
+  <text class="actor-text" x="110" y="57">CLI</text>
+  <text class="actor-text" x="350" y="57">HERE adapter</text>
+  <text class="actor-text" x="590" y="57">Device provider</text>
+  <text class="actor-text" x="850" y="57">UC-01 service</text>
+  <text class="actor-text" x="1120" y="57">CARLA adapter</text>
+
+  <line class="lifeline" x1="110" y1="77" x2="110" y2="868"/>
+  <line class="lifeline" x1="350" y1="77" x2="350" y2="868"/>
+  <line class="lifeline" x1="590" y1="77" x2="590" y2="868"/>
+  <line class="lifeline" x1="850" y1="77" x2="850" y2="868"/>
+  <line class="lifeline" x1="1120" y1="77" x2="1120" y2="868"/>
+
+  <text class="message-text" x="480" y="116">compose configured collaborators</text>
+  <line class="message" x1="110" y1="128" x2="850" y2="128"/>
+
+  <text class="message-text" x="600" y="170">prepare: fetch initial coverage</text>
+  <line class="message" x1="850" y1="182" x2="350" y2="182"/>
+
+  <text class="message-text" x="985" y="224">prepare: focus coverage</text>
+  <line class="message" x1="850" y1="236" x2="1120" y2="236"/>
+
+  <rect class="loop" x="18" y="270" width="1194" height="580" rx="5"/>
+  <path class="loop-label" d="M18 270 H205 V304 H18 Z"/>
+  <text class="loop-text" x="34" y="292">loop: each refresh tick</text>
+
+  <text class="message-text" x="720" y="338">poll timestamped readings</text>
+  <line class="message" x1="850" y1="350" x2="590" y2="350"/>
+
+  <text class="message-text" x="600" y="408">fetch flow + incidents</text>
+  <line class="message" x1="850" y1="420" x2="350" y2="420"/>
+
+  <text class="message-text" x="1002" y="475">filter, project and allocate population</text>
+  <path class="message" d="M850 487 H965 V535 H850"/>
+
+  <text class="message-text" x="985" y="582">synchronise owned vehicles</text>
+  <line class="message" x1="850" y1="594" x2="1120" y2="594"/>
+
+  <text class="message-text" x="985" y="652">apply speed / closure policy</text>
+  <line class="message" x1="850" y1="664" x2="1120" y2="664"/>
+
+  <text class="message-text" x="985" y="722">re-pin and sanitise owned actors</text>
+  <line class="message" x1="850" y1="734" x2="1120" y2="734"/>
+
+  <text class="message-text" x="480" y="796">report tick metrics</text>
+  <line class="reply" x1="850" y1="808" x2="110" y2="808"/>
+</svg>
