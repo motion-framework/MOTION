@@ -1,0 +1,41 @@
+{
+  "artifact_role": "legacy research reference",
+  "filename": "traffic_aimodel.pkl",
+  "sha256": "f938acd67bb0fda0b63027865167564452331fb692d80aba9ad820515cfbeec2",
+  "format": "joblib/pickle",
+  "size_bytes": 16294105,
+  "git_blob": "971f7c20eb30bbc0706e817159b486966092579d",
+  "introduced_by_commit": "11dc9cc540d053905489a4f6189e7e9756c68e39",
+  "estimator": "sklearn.ensemble.RandomForestClassifier",
+  "sklearn_version_recorded_in_pickle": "1.9.0",
+  "training_samples_recorded": 87718,
+  "classes_recorded": [
+    0,
+    1
+  ],
+  "estimator_parameters_recorded": {
+    "n_estimators": 100,
+    "max_depth": 15,
+    "min_samples_leaf": 5,
+    "min_samples_split": 2,
+    "max_features": "sqrt",
+    "bootstrap": true,
+    "random_state": 42,
+    "class_weight": "balanced"
+  },
+  "features_in_order": [
+    "speed_kmh",
+    "throttle",
+    "brake",
+    "steer",
+    "weather_rain"
+  ],
+  "target_semantics": "legacy per-vehicle incident_detected surrogate",
+  "training_dataset": "not present in the original repository",
+  "training_command": "not present in the original repository",
+  "training_metrics": "not present in the original repository",
+  "training_session_provenance": "not present in the original repository",
+  "contract_discrepancy": "The reference model uses class_weight=balanced, while the versioned legacy training script left class_weight at the scikit-learn default None.",
+  "provenance_status": "incomplete",
+  "security_note": "Only load this pickle when the checked SHA-256 matches; pickle can execute code."
+}
