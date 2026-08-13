@@ -1,0 +1,55 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: Quality and build (Python 3.12)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: pyproject.toml
+
+      - name: Install project and quality dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install --editable ".[dev,ml]"
+          python -m pip check
+
+      - name: Lint
+        run: python -m ruff check src tests
+
+      - name: Check formatting
+        run: python -m ruff format --check src tests
+
+      - name: Type check
+        run: python -m mypy src/traffic_mirror
+
+      - name: Run offline tests with coverage
+        run: >-
+          python -m pytest
+          --cov=traffic_mirror
+          --cov-report=term-missing
+          --cov-report=xml
+
+      - name: Build distributions
+        run: python -m build
