@@ -1,44 +1,23 @@
-# MOTION– sMart lighting tO improve safety and electricity cOnsumptioN
+# MOTION
 
-Research software for reproducing observed road traffic in CARLA and for
-experimenting with vehicle-level behavioral risk analysis in the MOTION project.
+*sMart lighting tO improve safeTy and electricIty cOnsumptioN*
 
-# Traffic Mirror - UC01
+MOTION is the shared research-software repository for the project's mobility,
+simulation, environmental-analysis and decision-support work. It is organised
+around seven Macro Use Cases, with common architecture, interfaces,
+documentation and quality gates intended to support their incremental
+development.
 
-Traffic Mirror turns a selected HERE-covered road into a validated
-OSM/OpenDRIVE map, loads that map in CARLA, and synchronises the population and
-speed policy of session-owned vehicles with HERE Traffic and synthetic
-field-device observations. The repository also preserves the existing telemetry
-→ enriched dataset → Random Forest → real-time inference experiment as a
-separate, versioned pipeline.
+## Repository status
 
+This initial codebase comes from the re-engineering of the Traffic Mirror thesis
+prototype. **UC-01 is currently the only implemented end-to-end use case.** The
+packages for UC-02–UC-07 provide scope and traceability metadata, but they do not
+yet expose executable workflows.
 
-## MOTION and OR3 context
-
-MOTION describes an integrated platform for monitoring and managing mobility,
-environmental and urban services. OR3 (*Metodi e strumenti di analisi
-veicolare*) covers research, specification and predictive methods for
-vehicle, traffic and behavior analysis. The seven Macro UCs also span
-simulation, environmental monitoring and decision support.
-
-Each Macro UC is tracked individually, and implementation status is based on
-executable repository evidence. CARLA, HERE, ScenarioRunner and Traffic4cast
-are technical choices or research directions in this repository; their mention
-does not imply that every related workflow is implemented.
-
-## Current capabilities
-
-- HERE road selection; atomic OSM acquisition; OpenDRIVE conversion, inspection
-  and narrow repairs; versioned active-map registration;
-- HERE flow/incident parsing, optional integrity-verifiable evidence archives
-  and device-derived fallback when live traffic is unavailable;
-- UC-01 population and speed mirroring, with explicit CARLA lifecycle,
-  TrafficManager control, watchdogs and cleanup limited to session-owned actors;
-- CARLA telemetry collection and deterministic construction of behavioral
-  datasets with a versioned feature contract;
-- fixed-contract Random Forest training, verified persistence and per-vehicle
-  inference tracking;
-- an installed CLI with offline tests, static analysis, packaging and CI.
+The existing `traffic_mirror` Python package and `traffic-mirror` command are
+retained for compatibility with the implemented UC-01 software. Their names do
+not limit the scope of this repository to Traffic Mirror.
 
 ## Macro Use Cases
 
@@ -61,6 +40,42 @@ The behavioral Random Forest is **not UC-04, UC-06 or UC-07**.  It predicts the
 legacy binary `incident_detected` label for an individual vehicle from
 `speed_kmh`, `throttle`, `brake`, `steer` and `weather_rain`; it does not forecast
 network traffic, luminosity or governance actions.
+
+## Implemented module: UC-01 — Real-Time Traffic Mirroring
+
+Traffic Mirror turns a selected HERE-covered road into a validated
+OSM/OpenDRIVE map, loads that map in CARLA, and synchronises the population and
+speed policy of session-owned vehicles with HERE Traffic and synthetic
+field-device observations. The repository also preserves the existing telemetry
+→ enriched dataset → Random Forest → real-time inference experiment as a
+separate, versioned pipeline.
+
+### Current capabilities
+
+- HERE road selection; atomic OSM acquisition; OpenDRIVE conversion, inspection
+  and narrow repairs; versioned active-map registration;
+- HERE flow/incident parsing, optional integrity-verifiable evidence archives
+  and device-derived fallback when live traffic is unavailable;
+- UC-01 population and speed mirroring, with explicit CARLA lifecycle,
+  TrafficManager control, watchdogs and cleanup limited to session-owned actors;
+- CARLA telemetry collection and deterministic construction of behavioral
+  datasets with a versioned feature contract;
+- fixed-contract Random Forest training, verified persistence and per-vehicle
+  inference tracking;
+- an installed CLI with offline tests, static analysis, packaging and CI.
+
+## MOTION and OR3 context
+
+MOTION describes an integrated platform for monitoring and managing mobility,
+environmental and urban services. OR3 (*Metodi e strumenti di analisi
+veicolare*) covers research, specification and predictive methods for vehicle,
+traffic and behaviour analysis. The seven Macro UCs also span simulation,
+environmental monitoring and decision support.
+
+Each Macro UC is tracked individually, and implementation status is based on
+executable repository evidence. CARLA, HERE, ScenarioRunner and Traffic4cast
+are technical choices or research directions in this repository; their mention
+does not imply that every related workflow is implemented.
 
 ## Architecture
 

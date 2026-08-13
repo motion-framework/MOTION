@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "traffic-mirror"
 version = "0.1.0"
-description = "Traffic analysis and CARLA-based traffic mirroring for the MOTION research project."
+description = "Research software framework for the MOTION project."
 readme = "README.md"
 requires-python = ">=3.12,<3.13"
 keywords = ["carla", "mobility", "simulation", "traffic"]
@@ -41,7 +41,7 @@ dev = [
 traffic-mirror = "traffic_mirror.cli:main"
 
 [project.urls]
-Repository = "https://github.com/cay3na/Traffic-Mirror"
+Repository = "https://github.com/motion-framework/MOTION"
 
 [tool.setuptools]
 package-dir = { "" = "src" }
