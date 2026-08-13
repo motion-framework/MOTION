@@ -1,0 +1,119 @@
+[build-system]
+requires = ["setuptools>=77", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "traffic-mirror"
+version = "0.1.0"
+description = "Traffic analysis and CARLA-based traffic mirroring for the MOTION research project."
+readme = "README.md"
+requires-python = ">=3.12,<3.13"
+keywords = ["carla", "mobility", "simulation", "traffic"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering",
+]
+dependencies = [
+    "pyproj==3.7.2",
+    "requests==2.32.5",
+]
+
+[project.optional-dependencies]
+ml = [
+    "joblib==1.5.3",
+    "numpy==2.3.4",
+    "pandas==2.3.3",
+    "scikit-learn==1.9.0",
+]
+dev = [
+    "build>=1.2,<2",
+    "mypy>=1.13,<2",
+    "pytest>=8.2,<9",
+    "pytest-cov>=5,<8",
+    "ruff>=0.9,<1",
+    "types-requests>=2.32,<3",
+]
+
+[project.scripts]
+traffic-mirror = "traffic_mirror.cli:main"
+
+[project.urls]
+Repository = "https://github.com/cay3na/Traffic-Mirror"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+include-package-data = true
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["traffic_mirror*"]
+
+[tool.setuptools.package-data]
+traffic_mirror = ["py.typed"]
+
+[tool.pytest.ini_options]
+minversion = "8.0"
+testpaths = ["tests"]
+pythonpath = ["src"]
+addopts = [
+    "--import-mode=importlib",
+    "--strict-config",
+    "--strict-markers",
+    "-ra",
+]
+xfail_strict = true
+
+[tool.coverage.run]
+branch = true
+relative_files = true
+source = ["traffic_mirror"]
+
+[tool.coverage.report]
+fail_under = 68
+show_missing = true
+skip_covered = true
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["B", "E", "F", "I", "RUF", "SIM", "UP", "W"]
+ignore = ["E501"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["traffic_mirror"]
+
+[tool.ruff.format]
+indent-style = "space"
+line-ending = "lf"
+quote-style = "double"
+
+[tool.mypy]
+python_version = "3.12"
+files = ["src/traffic_mirror"]
+mypy_path = "src"
+check_untyped_defs = true
+disallow_untyped_defs = true
+explicit_package_bases = true
+no_implicit_optional = true
+pretty = true
+show_error_codes = true
+strict_equality = true
+warn_redundant_casts = true
+warn_return_any = true
+warn_unreachable = true
+warn_unused_configs = true
+warn_unused_ignores = true
+
+[[tool.mypy.overrides]]
+module = [
+    "joblib",
+    "pandas",
+    "sklearn.*",
+]
+ignore_missing_imports = true
