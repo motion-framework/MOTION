@@ -101,7 +101,7 @@ class OsmDownloader:
             return destination_path
         headers = {
             "Accept": "application/xml",
-            "User-Agent": (f"MOTION-Traffic-Mirror/0.1 (contact: {self._contact_email})"),
+            "User-Agent": (f"MOTION/0.1 (contact: {self._contact_email})"),
         }
         last_error: RetryableOsmError | None = None
         for endpoint in self._endpoints:

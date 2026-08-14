@@ -10,14 +10,14 @@ development.
 
 ## Repository status
 
-This initial codebase comes from the re-engineering of the Traffic Mirror thesis
-prototype. **UC-01 is currently the only implemented end-to-end use case.** The
+This initial codebase comes from the re-engineering of a thesis prototype.
+**UC-01 is currently the only implemented end-to-end use case.** The
 packages for UC-02–UC-07 provide scope and traceability metadata, but they do not
 yet expose executable workflows.
 
 The existing `traffic_mirror` Python package and `traffic-mirror` command are
-retained for compatibility with the implemented UC-01 software. Their names do
-not limit the scope of this repository to Traffic Mirror.
+retained as legacy technical identifiers for compatibility with the original
+UC-01 prototype. They do not limit the scope of MOTION to UC-01.
 
 ## Macro Use Cases
 
@@ -43,11 +43,11 @@ network traffic, luminosity or governance actions.
 
 ## Implemented module: UC-01 — Real-Time Traffic Mirroring
 
-Traffic Mirror turns a selected HERE-covered road into a validated
-OSM/OpenDRIVE map, loads that map in CARLA, and synchronises the population and
-speed policy of session-owned vehicles with HERE Traffic and synthetic
-field-device observations. The repository also preserves the existing telemetry
-→ enriched dataset → Random Forest → real-time inference experiment as a
+MOTION's implemented UC-01 module turns a selected HERE-covered road into a
+validated OSM/OpenDRIVE map, loads that map in CARLA, and synchronises the
+population and speed policy of session-owned vehicles with HERE Traffic and
+synthetic field-device observations. The repository also preserves the existing
+telemetry → enriched dataset → Random Forest → real-time inference experiment as a
 separate, versioned pipeline.
 
 ### Current capabilities

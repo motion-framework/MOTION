@@ -1,14 +1,14 @@
-# Traffic Mirror architecture
+# MOTION architecture
 
 ## Dependency boundaries
 
-Traffic Mirror is organised as a Python package with a single composition root.
+MOTION is organised as a Python package with a single composition root.
 The CLI builds the concrete HERE, OSM and CARLA adapters and passes them to
 application services. UC packages contain orchestration or traceability
 metadata; they do not contain private copies of external clients. Domain rules
 remain importable without CARLA, Requests or the scientific stack.
 
-![Traffic Mirror package dependency boundaries](assets/architecture/dependency-boundaries.svg)
+![MOTION package dependency boundaries](assets/architecture/dependency-boundaries.svg)
 
 These arrows represent imports between top-level package areas. Prediction has
 its own schema and training contracts; it does not import the traffic-mirroring

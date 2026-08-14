@@ -1,4 +1,4 @@
-"""Technology-independent traffic-mirror models and policies."""
+"""Technology-independent traffic-mirroring models and policies."""
 
 from .geography import BoundingBox
 from .maps import MapProfile

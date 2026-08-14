@@ -28,7 +28,7 @@ filenames remain in Git history; they are not current entry points.
 | `.env` mixed credentials with generated map state | Configuration was overwritten and state had no schema or atomicity. | Static settings remain in `.env`; map state moved to versioned, atomic JSON. |
 | A 15-second client timeout remained inside the mirror despite 120-second checks | Full OpenDRIVE world generation could time out unpredictably. | One 120-second configured CARLA timeout is used at the lifecycle boundary. |
 | Verification and mirror paths regenerated worlds repeatedly | Slow, failure-prone startup and inconsistent checks. | Provision once, register only after validation, then load the same artifact. |
-| Cleanup selected every CARLA vehicle | A Traffic Mirror shutdown could destroy external actors. | Explicit session ownership controls all destruction. |
+| Cleanup selected every CARLA vehicle | A mirroring-session shutdown could destroy external actors. | Explicit session ownership controls all destruction. |
 | HERE request exceptions could include credential-bearing URLs | Secret disclosure in errors/logs. | Adapter errors contain endpoint purpose/status, never API query strings. |
 | Collector omitted `weather_rain` while training required it | The advertised ML workflow could not execute end to end. | Telemetry schema and dataset builder make weather handling explicit. |
 | Label shift was applied after a grouped transform | A vehicle could inherit another vehicle's future incident label. | Rolling and shift occur within the same vehicle/session group. |

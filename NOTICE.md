@@ -3,7 +3,7 @@
 ## CARLA
 
 CARLA and its Python API are external software and are not distributed as a PyPI
-dependency of Traffic Mirror. Their use and redistribution remain subject to
+dependency of MOTION. Their use and redistribution remain subject to
 the licenses and notices published by the CARLA project and its dependencies.
 
 ## OpenStreetMap data

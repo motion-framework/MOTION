@@ -51,7 +51,7 @@ class ConsoleDashboardReporter:
     def report(self, result: TickResult) -> None:
         write = self._stream.write
         write("\n" + "=" * 60 + "\n")
-        write(f"UC-01 TRAFFIC MIRROR | {self._map_name.upper()} DIGITAL TWIN\n")
+        write(f"MOTION UC-01 | {self._map_name.upper()} DIGITAL TWIN\n")
         write(
             f"Timestamp      : {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(result.timestamp))}\n"
         )
