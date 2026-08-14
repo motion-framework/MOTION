@@ -22,7 +22,7 @@ contains no live external-system tests.
 | HERE archival | Optional timestamped raw evidence. | Atomic snapshots, manifest and SHA-256 verification in `infrastructure.here.archive`. | Offline persistence/integrity tests. | Preserved with atomic writes and digest verification. |
 | HERE failure fallback | Flow failure does not stop the simulator; device state is used. | UC-01 application service logs the cause and uses uniform population. | UC service fake-provider tests. | Preserved; failure type is logged. |
 | Synthetic device feed | Timestamped per-device count/speed based on registered coordinates. | `domain.devices.SyntheticDeviceProvider` | Deterministic provider tests/fakes. | Preserved. |
-| Explicit offline UC-01 mode | Reuse the active map and exercise CARLA without constructing an HTTP client or contacting HERE/Overpass. | `traffic-mirror mirror --offline`; synthetic HERE v7 DTOs pass through the production HERE provider/parsers, alongside the synthetic device feed. | Payload-contract, parser-path, CLI composition and UC service tests. | Added as an opt-in verification path; values remain artificial. |
+| Explicit offline UC-01 mode | Reuse the active map and exercise CARLA without constructing an HTTP client or contacting HERE/Overpass. | `motion mirror --offline`; synthetic HERE v7 DTOs pass through the production HERE provider/parsers, alongside the synthetic device feed. | Payload-contract, parser-path, CLI composition and UC service tests. | Added as an opt-in verification path; values remain artificial. |
 | HERE road grouping and automatic ranking | Coverage/confidence/non-motorway ranking and representative geometry. | `application.road_selection` | Characterization tests. | Preserved. |
 | Interactive road selection | Displayed `1..N` menu. Legacy Python indexing also accepted 0/negative values. | Validates the documented `1..N` range. | Boundary tests. | Intentionally corrected. |
 | Road cut and device placement | Midpoint cut and four deterministic device coordinates. | `application.road_selection` | Exact characterization examples. | Preserved. |
@@ -50,8 +50,8 @@ contains no live external-system tests.
 | Model serialization | Root-level raw joblib model. | Curated legacy artifact retained; new artifacts use separate versioned metadata/checksum sidecars and atomic replacement. | Model persistence/integrity tests. | Preserved with safer new format. |
 | Real-time inference | Per-vehicle prediction, confirmation timeout and summary output. | Validated predictor/tracker plus CARLA monitor boundary. | Pure inference/tracker tests; live CARLA unverified. | Preserved. |
 | Pending-alert expiry after vehicle disappearance | Legacy expiry depended on receiving another sample for the same vehicle, so state could remain stale indefinitely. | Every tracker sample is also a heartbeat that expires all overdue pending alerts. | Pure tracker transition tests. | Intentionally corrected. |
-| Diagnostics/calibration | Speed-unit and geographic calibration scripts. | `traffic-mirror diagnostics` subcommands. | Parser/help tests; live CARLA unverified. | Preserved through the CLI. |
-| Root script workflows | Users invoked named Python scripts. | Their capabilities are available as installed `traffic-mirror` subcommands; checkout-only wrappers were removed in the final cleanup. | CLI parser and smoke tests. | Migrated; old filenames retired. |
+| Diagnostics/calibration | Speed-unit and geographic calibration scripts. | `motion diagnostics` subcommands. | Parser/help tests; live CARLA unverified. | Preserved through the CLI. |
+| Root script workflows | Users invoked named Python scripts. | Their capabilities are available as installed `motion` subcommands; checkout-only wrappers were removed in the final cleanup. | CLI parser and smoke tests. | Migrated; old filenames retired. |
 
 ## Explicit corrections
 

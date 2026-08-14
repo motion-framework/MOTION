@@ -7,8 +7,8 @@ python -m pip install --editable ".[dev,ml]"
 python -m pip check
 python -m ruff check src tests
 python -m ruff format --check src tests
-python -m mypy src/traffic_mirror
-python -m pytest --cov=traffic_mirror
+python -m mypy src/motion
+python -m pytest --cov=motion
 python -m build
 ```
 

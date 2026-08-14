@@ -2,12 +2,12 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from traffic_mirror.domain.devices import SyntheticDeviceProvider, synthesize_registry
-from traffic_mirror.domain.geography import BoundingBox
-from traffic_mirror.domain.maps import MapProfile
-from traffic_mirror.domain.mirroring import SpeedMirrorPolicy
-from traffic_mirror.domain.population import segment_target_vehicle_count
-from traffic_mirror.domain.traffic import TrafficSegment
+from motion.domain.devices import SyntheticDeviceProvider, synthesize_registry
+from motion.domain.geography import BoundingBox
+from motion.domain.maps import MapProfile
+from motion.domain.mirroring import SpeedMirrorPolicy
+from motion.domain.population import segment_target_vehicle_count
+from motion.domain.traffic import TrafficSegment
 
 
 class FixedRandom:

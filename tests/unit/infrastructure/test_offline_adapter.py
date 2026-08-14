@@ -5,10 +5,10 @@ from pathlib import Path
 
 import pytest
 
-from traffic_mirror.domain.geography import BoundingBox
-from traffic_mirror.domain.maps import MapProfile
-from traffic_mirror.infrastructure.here.parser import IncidentParser, TrafficParser
-from traffic_mirror.infrastructure.offline import (
+from motion.domain.geography import BoundingBox
+from motion.domain.maps import MapProfile
+from motion.infrastructure.here.parser import IncidentParser, TrafficParser
+from motion.infrastructure.offline import (
     HereCompatiblePayloadFactory,
     build_offline_provider,
 )

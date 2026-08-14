@@ -5,8 +5,8 @@ import math
 import pandas as pd
 import pytest
 
-from traffic_mirror.prediction.features import build_feature_frame, ensure_weather_rain
-from traffic_mirror.prediction.schema import (
+from motion.prediction.features import build_feature_frame, ensure_weather_rain
+from motion.prediction.schema import (
     MODEL_FEATURES,
     PredictionSchemaError,
     VehicleObservation,

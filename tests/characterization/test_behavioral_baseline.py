@@ -7,12 +7,12 @@ from pathlib import Path
 
 import pytest
 
-from traffic_mirror.application.road_selection import (
+from motion.application.road_selection import (
     cut_road_around_midpoint,
     device_positions,
 )
-from traffic_mirror.domain.devices import DeviceReading
-from traffic_mirror.domain.geography import (
+from motion.domain.devices import DeviceReading
+from motion.domain.geography import (
     BoundingBox,
     approximate_geo_distance_meters,
     distance_point_to_line_segment,
@@ -20,17 +20,17 @@ from traffic_mirror.domain.geography import (
     planar_distance_meters,
     polyline_length_meters,
 )
-from traffic_mirror.domain.mirroring import SpeedMirrorPolicy, derive_target_vehicle_count
-from traffic_mirror.domain.population import (
+from motion.domain.mirroring import SpeedMirrorPolicy, derive_target_vehicle_count
+from motion.domain.population import (
     derive_population_targets,
     segment_target_vehicle_count,
 )
-from traffic_mirror.domain.traffic import (
+from motion.domain.traffic import (
     TrafficIncident,
     TrafficSegment,
     enrich_segments_with_incidents,
 )
-from traffic_mirror.infrastructure.here.parser import TrafficParser
+from motion.infrastructure.here.parser import TrafficParser
 
 FIXTURES = Path(__file__).resolve().parents[1] / "fixtures"
 

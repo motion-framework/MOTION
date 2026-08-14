@@ -7,8 +7,8 @@ import joblib
 import pandas as pd
 import pytest
 
-from traffic_mirror.prediction import artifacts
-from traffic_mirror.prediction.artifacts import (
+from motion.prediction import artifacts
+from motion.prediction.artifacts import (
     ArtifactCompatibilityError,
     ArtifactIntegrityError,
     ArtifactMetadata,
@@ -16,8 +16,8 @@ from traffic_mirror.prediction.artifacts import (
     load_trusted_legacy_model,
     sha256_file,
 )
-from traffic_mirror.prediction.schema import MODEL_FEATURES
-from traffic_mirror.prediction.training import build_classifier
+from motion.prediction.schema import MODEL_FEATURES
+from motion.prediction.training import build_classifier
 
 pytestmark = pytest.mark.filterwarnings(
     "ignore:Setting the shape on a NumPy array has been deprecated:DeprecationWarning"

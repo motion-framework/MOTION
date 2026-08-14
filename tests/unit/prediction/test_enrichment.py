@@ -4,8 +4,8 @@ import pandas as pd
 import pandas.testing as pdt
 import pytest
 
-from traffic_mirror.prediction.enrichment import EnrichmentConfig, enrich_dataset
-from traffic_mirror.prediction.schema import LABEL_TAIL_POLICY, TARGET_COLUMN
+from motion.prediction.enrichment import EnrichmentConfig, enrich_dataset
+from motion.prediction.schema import LABEL_TAIL_POLICY, TARGET_COLUMN
 
 
 def _frame(rows: list[dict[str, object]]) -> pd.DataFrame:
@@ -159,11 +159,11 @@ def test_future_accident_points_are_used_within_the_same_session() -> None:
 
 
 def test_reserved_internal_column_name_is_preserved() -> None:
-    source = _frame([{"__traffic_mirror_input_order__": "caller-value"}])
+    source = _frame([{"__motion_input_order__": "caller-value"}])
 
     result = enrich_dataset(source)
 
-    assert result["__traffic_mirror_input_order__"].tolist() == ["caller-value"]
+    assert result["__motion_input_order__"].tolist() == ["caller-value"]
 
 
 @pytest.mark.parametrize("threshold", [float("nan"), float("inf")])

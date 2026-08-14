@@ -14,9 +14,9 @@ enriched it with jam/collision labels, trained a Random Forest classifier and
 performed per-vehicle real-time inference. The reference Torino OSM/OpenDRIVE pair
 and serialized model were retained as reference artifacts.
 
-Execution was split across root-level scripts. `traffic_mirror.py` combined
-configuration, domain calculations, HTTP, projection, CARLA lifecycle,
-population, control, sanitisation and output. Separate scripts performed map
+Execution was split across root-level scripts. One monolithic traffic-mirroring
+script combined configuration, domain calculations, HTTP, projection, CARLA
+lifecycle, population, control, sanitisation and output. Separate scripts performed map
 conversion, telemetry collection, enrichment, training and inference. Those
 filenames remain in Git history; they are not current entry points.
 

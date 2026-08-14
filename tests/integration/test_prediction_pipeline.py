@@ -5,12 +5,12 @@ from pathlib import Path
 
 import pandas as pd
 
-from traffic_mirror.cli import main
-from traffic_mirror.prediction.artifacts import JoblibModelRepository
-from traffic_mirror.prediction.dataset import build_dataset_files
-from traffic_mirror.prediction.inference import predict_incident
-from traffic_mirror.prediction.schema import FEATURE_NAMES, VehicleObservation
-from traffic_mirror.prediction.training import SplitStrategy, train_model_file
+from motion.cli import main
+from motion.prediction.artifacts import JoblibModelRepository
+from motion.prediction.dataset import build_dataset_files
+from motion.prediction.inference import predict_incident
+from motion.prediction.schema import FEATURE_NAMES, VehicleObservation
+from motion.prediction.training import SplitStrategy, train_model_file
 
 
 def _write_session(path: Path, session_index: int) -> None:

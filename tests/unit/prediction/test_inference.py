@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from traffic_mirror.prediction.inference import (
+from motion.prediction.inference import (
     AlertEventType,
     AlertTrackerState,
     TrackingSample,
@@ -11,7 +11,7 @@ from traffic_mirror.prediction.inference import (
     predict_incident,
     update_alert_tracker,
 )
-from traffic_mirror.prediction.schema import MODEL_FEATURES, VehicleObservation
+from motion.prediction.schema import MODEL_FEATURES, VehicleObservation
 
 
 class RecordingModel:

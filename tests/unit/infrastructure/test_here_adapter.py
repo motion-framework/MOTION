@@ -5,18 +5,18 @@ from pathlib import Path
 
 import pytest
 
-from traffic_mirror.config.settings import load_settings
-from traffic_mirror.domain.geography import BoundingBox
-from traffic_mirror.domain.maps import MapProfile
-from traffic_mirror.infrastructure.here.archive import HereArchive, verify_archive
-from traffic_mirror.infrastructure.here.client import (
+from motion.config.settings import load_settings
+from motion.domain.geography import BoundingBox
+from motion.domain.maps import MapProfile
+from motion.infrastructure.here.archive import HereArchive, verify_archive
+from motion.infrastructure.here.client import (
     HereApiError,
     HereEndpointFetcher,
     RequestsJsonTransport,
 )
-from traffic_mirror.infrastructure.here.factory import build_here_provider
-from traffic_mirror.infrastructure.here.parser import IncidentParser, TrafficParser
-from traffic_mirror.infrastructure.here.provider import HereTrafficProvider
+from motion.infrastructure.here.factory import build_here_provider
+from motion.infrastructure.here.parser import IncidentParser, TrafficParser
+from motion.infrastructure.here.provider import HereTrafficProvider
 
 FIXTURES = Path(__file__).resolve().parents[2] / "fixtures" / "here"
 

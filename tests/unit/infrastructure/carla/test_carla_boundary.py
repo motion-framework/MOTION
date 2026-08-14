@@ -7,13 +7,13 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from traffic_mirror.config.settings import CarlaSettings
-from traffic_mirror.infrastructure.carla.api import (
+from motion.config.settings import CarlaSettings
+from motion.infrastructure.carla.api import (
     CarlaUnavailableError,
     load_carla_module,
 )
-from traffic_mirror.infrastructure.carla.lifecycle import CarlaLifecycle
-from traffic_mirror.infrastructure.carla.population import (
+from motion.infrastructure.carla.lifecycle import CarlaLifecycle
+from motion.infrastructure.carla.population import (
     CarlaPopulationManager,
     OwnedVehicleRegistry,
 )
@@ -150,7 +150,7 @@ class CarlaBoundaryTest(unittest.TestCase):
             return real_import(name, package)
 
         with patch("importlib.import_module", side_effect=guarded_import):
-            module = importlib.import_module("traffic_mirror.infrastructure.carla.adapter")
+            module = importlib.import_module("motion.infrastructure.carla.adapter")
         self.assertIsNotNone(module.CarlaTrafficSimulator)
         self.assertNotIn("carla", requested)
 
@@ -166,9 +166,9 @@ class CarlaBoundaryTest(unittest.TestCase):
             return real_import(name, package)
 
         capability_modules = (
-            "traffic_mirror.infrastructure.carla.telemetry",
-            "traffic_mirror.infrastructure.carla.behavior_monitor",
-            "traffic_mirror.infrastructure.carla.diagnostics",
+            "motion.infrastructure.carla.telemetry",
+            "motion.infrastructure.carla.behavior_monitor",
+            "motion.infrastructure.carla.diagnostics",
         )
         with patch("importlib.import_module", side_effect=guarded_import):
             imported = tuple(importlib.import_module(name) for name in capability_modules)

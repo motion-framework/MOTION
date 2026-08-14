@@ -6,8 +6,8 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-from traffic_mirror.prediction.schema import MODEL_FEATURES
-from traffic_mirror.prediction.training import (
+from motion.prediction.schema import MODEL_FEATURES
+from motion.prediction.training import (
     RANDOM_FOREST_PARAMETERS,
     SplitStrategy,
     TrainingError,

@@ -5,13 +5,13 @@ from pathlib import Path
 
 import pytest
 
-from traffic_mirror.application.map_provisioning import MapProvisioningService
-from traffic_mirror.config.paths import ProjectPaths
-from traffic_mirror.config.runtime_state import ActiveMapState, ActiveMapStateRepository
-from traffic_mirror.domain.geography import BoundingBox
-from traffic_mirror.domain.maps import MapProfile
-from traffic_mirror.infrastructure.maps.artifacts import LocalMapArtifactProcessor
-from traffic_mirror.infrastructure.maps.geometry import (
+from motion.application.map_provisioning import MapProvisioningService
+from motion.config.paths import ProjectPaths
+from motion.config.runtime_state import ActiveMapState, ActiveMapStateRepository
+from motion.domain.geography import BoundingBox
+from motion.domain.maps import MapProfile
+from motion.infrastructure.maps.artifacts import LocalMapArtifactProcessor
+from motion.infrastructure.maps.geometry import (
     scan_degenerate_geometries,
     scan_object_overflows,
 )

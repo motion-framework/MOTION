@@ -7,8 +7,8 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-from traffic_mirror.prediction.dataset import build_dataset_files
-from traffic_mirror.prediction.schema import PredictionSchemaError
+from motion.prediction.dataset import build_dataset_files
+from motion.prediction.schema import PredictionSchemaError
 
 FIXTURES = Path(__file__).parents[2] / "fixtures" / "prediction"
 

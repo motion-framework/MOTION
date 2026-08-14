@@ -2,7 +2,7 @@
 
 ## Scope
 
-The `traffic_mirror.prediction` pipeline is an OR3 behavioral research
+The `motion.prediction` pipeline is an OR3 behavioral research
 capability. It neither implements nor demonstrates Macro Use Cases UC-04,
 UC-06 or UC-07. Core code does not open CARLA connections, access the network,
 or read or write files on import; paths are always supplied by the caller.

@@ -3,8 +3,8 @@ from __future__ import annotations
 import unittest
 from types import SimpleNamespace
 
-from traffic_mirror.infrastructure.carla.population import OwnedVehicleRegistry
-from traffic_mirror.infrastructure.carla.sanitizer import (
+from motion.infrastructure.carla.population import OwnedVehicleRegistry
+from motion.infrastructure.carla.sanitizer import (
     FellThroughMapRule,
     FleetSanitizer,
     FrozenInTrafficRule,

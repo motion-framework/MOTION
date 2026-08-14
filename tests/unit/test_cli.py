@@ -6,12 +6,16 @@ from types import SimpleNamespace
 
 import pytest
 
-import traffic_mirror.cli as cli
-from traffic_mirror.cli import build_parser, main
-from traffic_mirror.domain.geography import BoundingBox
-from traffic_mirror.domain.maps import MapProfile
+import motion.cli as cli
+from motion.cli import build_parser, main
+from motion.domain.geography import BoundingBox
+from motion.domain.maps import MapProfile
 
 FIXTURES = Path(__file__).resolve().parents[1] / "fixtures"
+
+
+def test_cli_uses_the_project_wide_motion_command() -> None:
+    assert build_parser().prog == "motion"
 
 
 def test_uc_status_is_available_without_external_dependencies(capsys) -> None:
@@ -90,7 +94,7 @@ def test_offline_mirror_reuses_active_map_and_reaches_uc01(monkeypatch) -> None:
 
 
 def test_offline_provider_selection_does_not_build_here(monkeypatch) -> None:
-    from traffic_mirror.infrastructure.here import factory
+    from motion.infrastructure.here import factory
 
     here_builder_called = False
 

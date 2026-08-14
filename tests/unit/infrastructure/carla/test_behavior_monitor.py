@@ -5,12 +5,12 @@ from types import SimpleNamespace
 
 import pytest
 
-import traffic_mirror.infrastructure.carla.behavior_monitor as behavior_monitor
-from traffic_mirror.infrastructure.carla.behavior_monitor import (
+import motion.infrastructure.carla.behavior_monitor as behavior_monitor
+from motion.infrastructure.carla.behavior_monitor import (
     CarlaBehaviorMonitor,
     load_behavior_model,
 )
-from traffic_mirror.prediction.inference import VehiclePrediction
+from motion.prediction.inference import VehiclePrediction
 
 
 class FakeLocation:

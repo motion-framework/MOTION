@@ -4,15 +4,15 @@ import json
 
 import pytest
 
-from traffic_mirror.config.paths import ProjectPaths, UnsafeMapNameError
-from traffic_mirror.config.runtime_state import (
+from motion.config.paths import ProjectPaths, UnsafeMapNameError
+from motion.config.runtime_state import (
     ActiveMapState,
     ActiveMapStateRepository,
     RuntimeStateError,
     load_active_map_state,
 )
-from traffic_mirror.config.settings import SettingsError, load_settings
-from traffic_mirror.domain.geography import BoundingBox
+from motion.config.settings import SettingsError, load_settings
+from motion.domain.geography import BoundingBox
 
 
 def test_static_environment_overrides_dotenv(tmp_path) -> None:
@@ -28,7 +28,7 @@ def test_static_environment_overrides_dotenv(tmp_path) -> None:
 
 def test_project_root_can_be_selected_explicitly_from_configuration(tmp_path) -> None:
     configured_root = tmp_path / "research-run"
-    settings = load_settings(environ={"TRAFFIC_MIRROR_PROJECT_ROOT": str(configured_root)})
+    settings = load_settings(environ={"MOTION_PROJECT_ROOT": str(configured_root)})
     assert settings.paths.root == configured_root.resolve()
 
 

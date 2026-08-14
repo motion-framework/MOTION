@@ -3,20 +3,20 @@ from __future__ import annotations
 import unittest
 from pathlib import Path
 
-from traffic_mirror.application.use_cases.uc01_real_time_traffic_mirroring.coverage import (
+from motion.application.use_cases.uc01_real_time_traffic_mirroring.coverage import (
     MapCoverage,
 )
-from traffic_mirror.application.use_cases.uc01_real_time_traffic_mirroring.filtering import (
+from motion.application.use_cases.uc01_real_time_traffic_mirroring.filtering import (
     SegmentFilter,
 )
-from traffic_mirror.application.use_cases.uc01_real_time_traffic_mirroring.service import (
+from motion.application.use_cases.uc01_real_time_traffic_mirroring.service import (
     TrafficMirrorService,
 )
-from traffic_mirror.domain.devices import DeviceReading
-from traffic_mirror.domain.geography import BoundingBox
-from traffic_mirror.domain.maps import MapProfile
-from traffic_mirror.domain.mirroring import SpeedMirrorPolicy
-from traffic_mirror.domain.traffic import TrafficSegment
+from motion.domain.devices import DeviceReading
+from motion.domain.geography import BoundingBox
+from motion.domain.maps import MapProfile
+from motion.domain.mirroring import SpeedMirrorPolicy
+from motion.domain.traffic import TrafficSegment
 
 
 class IdentityProjector:
@@ -186,7 +186,7 @@ class TrafficMirrorServiceTest(unittest.TestCase):
         service = self.make_service(provider, devices, simulator, CapturingReporter())
 
         with self.assertLogs(
-            "traffic_mirror.application.use_cases.uc01_real_time_traffic_mirroring.service",
+            "motion.application.use_cases.uc01_real_time_traffic_mirroring.service",
             level="WARNING",
         ) as captured:
             result = service.run_tick()

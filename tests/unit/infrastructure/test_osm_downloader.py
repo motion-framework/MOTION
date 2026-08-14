@@ -4,8 +4,8 @@ from pathlib import Path
 
 import pytest
 
-from traffic_mirror.domain.geography import BoundingBox
-from traffic_mirror.infrastructure.osm.downloader import (
+from motion.domain.geography import BoundingBox
+from motion.infrastructure.osm.downloader import (
     OsmDownloader,
     OsmDownloadError,
     RetryableOsmError,
@@ -47,7 +47,7 @@ def test_downloader_fails_over_then_atomically_writes_valid_osm(tmp_path) -> Non
         "https://second.invalid",
     ]
     assert transport.calls[0][1] == "14,40,14.01,40.01"
-    assert "research@example.invalid" in transport.calls[0][2]
+    assert transport.calls[0][2] == "MOTION/0.1 (contact: research@example.invalid)"
     assert sleeps == [0.25]
     assert not output.with_suffix(".osm.tmp").exists()
 

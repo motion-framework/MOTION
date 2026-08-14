@@ -11,25 +11,26 @@ remain importable without CARLA, Requests or the scientific stack.
 ![MOTION package dependency boundaries](assets/architecture/dependency-boundaries.svg)
 
 These arrows represent imports between top-level package areas. Prediction has
-its own schema and training contracts; it does not import the traffic-mirroring
-domain. The domain performs no I/O and does not import CARLA, Requests, pandas
-or scikit-learn. Dedicated UC packages do not import one another.
+its own schema and training contracts; it does not import `motion.domain`, which
+currently contains UC-01's simulator-neutral traffic policies. The domain
+performs no I/O and does not import CARLA, Requests, pandas or scikit-learn.
+Dedicated UC packages do not import one another.
 
 ## Package responsibilities
 
 | Package | Responsibility |
 |---|---|
-| `traffic_mirror.domain` | Geographic value objects, map and traffic contracts, device semantics, population and speed policies. |
-| `traffic_mirror.ports` | Protocols for traffic acquisition, field observations, simulation and local map processing. |
-| `traffic_mirror.application` | Map provisioning, HERE-road selection and application orchestration. |
-| `traffic_mirror.application.use_cases` | One package per documented Macro UC; UC-01 owns executable orchestration, UC-02–UC-07 expose traceability metadata only. |
-| `traffic_mirror.infrastructure.here` | Credential-safe HTTP acquisition, parsing, incident enrichment and verifiable optional archival. |
-| `traffic_mirror.infrastructure.osm` | Overpass download with explicit timeout, contact metadata and atomic destination replacement. |
-| `traffic_mirror.infrastructure.maps` | OSM inspection, projection, Osm2Odr conversion and characterised OpenDRIVE repair tools. |
-| `traffic_mirror.infrastructure.carla` | Lazy CARLA loading, server/client lifecycle, map loading, actor ownership, population, TrafficManager commands, sanitisation and calibration. |
-| `traffic_mirror.prediction` | Versioned feature schema, telemetry enrichment, split/training/evaluation, model persistence and inference tracking for the existing behavioral experiment. |
-| `traffic_mirror.config` | Static settings, project-root discovery/override and separate versioned active-map state. |
-| `traffic_mirror.cli` | Argument parsing, composition and user output; no domain rules. |
+| `motion.domain` | Geographic value objects, map and traffic contracts, device semantics, population and speed policies. |
+| `motion.ports` | Protocols for traffic acquisition, field observations, simulation and local map processing. |
+| `motion.application` | Map provisioning, HERE-road selection and application orchestration. |
+| `motion.application.use_cases` | One package per documented Macro UC; UC-01 owns executable orchestration, UC-02–UC-07 expose traceability metadata only. |
+| `motion.infrastructure.here` | Credential-safe HTTP acquisition, parsing, incident enrichment and verifiable optional archival. |
+| `motion.infrastructure.osm` | Overpass download with explicit timeout, contact metadata and atomic destination replacement. |
+| `motion.infrastructure.maps` | OSM inspection, projection, Osm2Odr conversion and characterised OpenDRIVE repair tools. |
+| `motion.infrastructure.carla` | Lazy CARLA loading, server/client lifecycle, map loading, actor ownership, population, TrafficManager commands, sanitisation and calibration. |
+| `motion.prediction` | Versioned feature schema, telemetry enrichment, split/training/evaluation, model persistence and inference tracking for the existing behavioral experiment. |
+| `motion.config` | Static settings, project-root discovery/override and separate versioned active-map state. |
+| `motion.cli` | Argument parsing, composition and user output; no domain rules. |
 
 UC-01 is the only executable macro use case. The package/status mapping and the
 evidence for UC-02–UC-07 are recorded in [use-cases.md](use-cases.md).

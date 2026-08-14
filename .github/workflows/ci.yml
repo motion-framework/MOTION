@@ -42,12 +42,12 @@ jobs:
         run: python -m ruff format --check src tests
 
       - name: Type check
-        run: python -m mypy src/traffic_mirror
+        run: python -m mypy src/motion
 
       - name: Run offline tests with coverage
         run: >-
           python -m pytest
-          --cov=traffic_mirror
+          --cov=motion
           --cov-report=term-missing
           --cov-report=xml
 

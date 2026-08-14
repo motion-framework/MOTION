@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from traffic_mirror.application.road_selection import (
+from motion.application.road_selection import (
     RoadSelectionError,
     build_map_state_for_road,
     choose_road_interactively,
@@ -11,8 +11,8 @@ from traffic_mirror.application.road_selection import (
     segments_near_center,
     select_main_road_segment,
 )
-from traffic_mirror.config.paths import ProjectPaths
-from traffic_mirror.domain.traffic import TrafficSegment
+from motion.config.paths import ProjectPaths
+from motion.domain.traffic import TrafficSegment
 
 
 def _segment(**overrides: object) -> TrafficSegment:

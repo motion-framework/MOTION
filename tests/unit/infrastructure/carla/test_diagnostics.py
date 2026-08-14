@@ -4,15 +4,15 @@ import io
 from pathlib import Path
 from types import SimpleNamespace
 
-from traffic_mirror.config.paths import ProjectPaths
-from traffic_mirror.config.settings import (
+from motion.config.paths import ProjectPaths
+from motion.config.settings import (
     AppSettings,
     CarlaSettings,
     HereSettings,
     MirrorSettings,
     OsmSettings,
 )
-from traffic_mirror.infrastructure.carla.diagnostics import (
+from motion.infrastructure.carla.diagnostics import (
     SpeedUnitDiagnosticConfig,
     SpeedUnitVerdict,
     classify_speed_unit,

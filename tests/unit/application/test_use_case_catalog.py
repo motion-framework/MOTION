@@ -5,32 +5,32 @@ from __future__ import annotations
 import importlib
 import unittest
 
-from traffic_mirror.application.use_cases.catalog import USE_CASE_CATALOG
-from traffic_mirror.application.use_cases.descriptor import UseCaseStatus
+from motion.application.use_cases.catalog import USE_CASE_CATALOG
+from motion.application.use_cases.descriptor import UseCaseStatus
 
 DEDICATED_PACKAGES = (
     (
-        "traffic_mirror.application.use_cases.uc01_real_time_traffic_mirroring",
+        "motion.application.use_cases.uc01_real_time_traffic_mirroring",
         "UC-01",
     ),
-    ("traffic_mirror.application.use_cases.uc02_what_if_scenario", "UC-02"),
+    ("motion.application.use_cases.uc02_what_if_scenario", "UC-02"),
     (
-        "traffic_mirror.application.use_cases.uc03_infrastructure_event_simulation",
+        "motion.application.use_cases.uc03_infrastructure_event_simulation",
         "UC-03",
     ),
     (
-        "traffic_mirror.application.use_cases.uc04_multivariate_traffic_prediction",
+        "motion.application.use_cases.uc04_multivariate_traffic_prediction",
         "UC-04",
     ),
     (
-        "traffic_mirror.application.use_cases.uc05_environmental_impact_forecast",
+        "motion.application.use_cases.uc05_environmental_impact_forecast",
         "UC-05",
     ),
     (
-        "traffic_mirror.application.use_cases.uc06_luminosity_anomaly_detection",
+        "motion.application.use_cases.uc06_luminosity_anomaly_detection",
         "UC-06",
     ),
-    ("traffic_mirror.application.use_cases.uc07_governance_alerts", "UC-07"),
+    ("motion.application.use_cases.uc07_governance_alerts", "UC-07"),
 )
 
 

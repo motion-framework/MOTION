@@ -15,9 +15,11 @@ This initial codebase comes from the re-engineering of a thesis prototype.
 packages for UC-02–UC-07 provide scope and traceability metadata, but they do not
 yet expose executable workflows.
 
-The existing `traffic_mirror` Python package and `traffic-mirror` command are
-retained as legacy technical identifiers for compatibility with the original
-UC-01 prototype. They do not limit the scope of MOTION to UC-01.
+The project-wide Python package and installed command are both named `motion`,
+matching the MOTION project rather than the scope of a single use case. UC-01
+remains explicitly identified by its `uc01_real_time_traffic_mirroring` package.
+This is a deliberate breaking namespace migration: no legacy package, console
+command or project-root environment-variable alias is exposed.
 
 ## Macro Use Cases
 
@@ -32,7 +34,7 @@ UC-01 prototype. They do not limit the scope of MOTION to UC-01.
 | UC-07 Governance Alerts | Produce auditable decision-support recommendations and delivery. | **NOT IMPLEMENTED / RESEARCH DIRECTION** |
 
 Each UC has a dedicated package under
-`traffic_mirror.application.use_cases`.  Packages for unavailable workflows
+`motion.application.use_cases`.  Packages for unavailable workflows
 contain traceability metadata only and expose no executable command. See
 [docs/use-cases.md](docs/use-cases.md) for evidence, dependencies and gaps.
 
@@ -95,7 +97,7 @@ and migration record are in
 ```text
 .
 ├── pyproject.toml                 package, tools and dependency contracts
-├── src/traffic_mirror/
+├── src/motion/
 │   ├── application/              provisioning, selection and UC services
 │   ├── config/                   static settings, paths and runtime state
 │   ├── domain/                   pure traffic/geospatial/device policies
@@ -153,7 +155,7 @@ are:
 
 | Variable | Purpose | Default |
 |---|---|---|
-| `TRAFFIC_MIRROR_PROJECT_ROOT` | Explicit data/config root for an installed wheel outside the source checkout. | detected checkout, then current directory |
+| `MOTION_PROJECT_ROOT` | Explicit data/config root for an installed wheel outside the source checkout. | detected checkout, then current directory |
 | `HERE_API_KEY` | HERE Traffic credential. | empty |
 | `HERE_ARCHIVE_MODE` | `off` or raw-response evidence `record`. | `off` |
 | `CARLA_HOST`, `CARLA_PORT` | CARLA RPC endpoint. | `localhost`, `2000` |
@@ -178,16 +180,16 @@ Inspect implementation status and the installed command surface without CARLA
 or credentials:
 
 ```bash
-traffic-mirror uc-status
-traffic-mirror --help
-traffic-mirror map --help
+motion uc-status
+motion --help
+motion map --help
 ```
 
 Provision a named map directly from a centre/radius. This command needs network
 access to Overpass and a compatible CARLA Python API for Osm2Odr conversion:
 
 ```bash
-traffic-mirror map provision \
+motion map provision \
   --name salerno \
   --lat 40.6772 --lon 14.7604 --radius 400
 ```
@@ -195,21 +197,21 @@ traffic-mirror map provision \
 Road selection additionally requires `HERE_API_KEY`:
 
 ```bash
-traffic-mirror map mirror-road \
+motion map mirror-road \
   --lat 40.6772 --lon 14.7604 --radius 400 --name salerno --geo
 ```
 
 The full UC-01 flow also requires a reachable CARLA simulator:
 
 ```bash
-traffic-mirror mirror \
+motion mirror \
   --lat 40.6772 --lon 14.7604 --radius 400 --name salerno --geo
 ```
 
 Reuse the registered active map without another OSM/OpenDRIVE build:
 
 ```bash
-traffic-mirror mirror --skip-provision
+motion mirror --skip-provision
 ```
 
 Run one complete UC-01 integration tick without HERE or Overpass, using the
@@ -217,7 +219,7 @@ registered active map, synthetic field-device readings and synthetic traffic
 payloads that match the HERE v7 subset consumed by this project:
 
 ```bash
-traffic-mirror mirror --offline --once
+motion mirror --offline --once
 ```
 
 Offline mode still requires a reachable CARLA simulator. It does not construct
@@ -235,25 +237,25 @@ configured HERE, Overpass or CARLA boundary is unavailable.
 
 | Command | Capability |
 |---|---|
-| `traffic-mirror uc-status [--json]` | Print UC-01–UC-07 traceability status. |
-| `traffic-mirror map provision` | Download, convert, repair and register an area. |
-| `traffic-mirror map mirror-road` | Select a HERE road and provision its map. |
-| `traffic-mirror map inspect PATH` | Inspect OSM counts and bounds. |
-| `traffic-mirror map validate PATH` | Scan all supported OpenDRIVE defects. |
-| `traffic-mirror map repair PATH` | Apply supported repairs with backups. |
-| `traffic-mirror map scan-degenerate PATH` | Report invalid geometry lengths. |
-| `traffic-mirror map scan-overflow PATH` | Report objects beyond road length. |
-| `traffic-mirror map patch-zero PATH` | Patch exactly zero-length geometries. |
-| `traffic-mirror map patch-overflow PATH` | Clamp overflowing objects. |
-| `traffic-mirror map convert-active` | Reconvert the registered OSM map. |
-| `traffic-mirror mirror` | Execute UC-01; `--offline` runs against the active map without HERE/Overpass. |
-| `traffic-mirror here verify-archive PATH` | Verify archived snapshot hashes. |
-| `traffic-mirror telemetry collect` | Collect CARLA vehicle telemetry. |
-| `traffic-mirror dataset build` | Build one enriched behavioral dataset from explicit CSVs. |
-| `traffic-mirror model train` | Train/evaluate and persist the fixed Random Forest contract. |
-| `traffic-mirror model infer` | Run CARLA behavioral inference and write summary statistics. |
-| `traffic-mirror diagnostics speed-units` | Run the opt-in TrafficManager unit diagnostic. |
-| `traffic-mirror diagnostics calibration` | Check registered map/geographic alignment. |
+| `motion uc-status [--json]` | Print UC-01–UC-07 traceability status. |
+| `motion map provision` | Download, convert, repair and register an area. |
+| `motion map mirror-road` | Select a HERE road and provision its map. |
+| `motion map inspect PATH` | Inspect OSM counts and bounds. |
+| `motion map validate PATH` | Scan all supported OpenDRIVE defects. |
+| `motion map repair PATH` | Apply supported repairs with backups. |
+| `motion map scan-degenerate PATH` | Report invalid geometry lengths. |
+| `motion map scan-overflow PATH` | Report objects beyond road length. |
+| `motion map patch-zero PATH` | Patch exactly zero-length geometries. |
+| `motion map patch-overflow PATH` | Clamp overflowing objects. |
+| `motion map convert-active` | Reconvert the registered OSM map. |
+| `motion mirror` | Execute UC-01; `--offline` runs against the active map without HERE/Overpass. |
+| `motion here verify-archive PATH` | Verify archived snapshot hashes. |
+| `motion telemetry collect` | Collect CARLA vehicle telemetry. |
+| `motion dataset build` | Build one enriched behavioral dataset from explicit CSVs. |
+| `motion model train` | Train/evaluate and persist the fixed Random Forest contract. |
+| `motion model infer` | Run CARLA behavioral inference and write summary statistics. |
+| `motion diagnostics speed-units` | Run the opt-in TrafficManager unit diagnostic. |
+| `motion diagnostics calibration` | Check registered map/geographic alignment. |
 
 Run any command with `--help` for its complete option set. The former standalone
 scripts were removed after their capabilities were migrated to this CLI.
@@ -265,18 +267,18 @@ separate commands. Telemetry collection attaches to the current CARLA world;
 model inference also requires a registered active map and CARLA:
 
 ```bash
-traffic-mirror telemetry collect \
+motion telemetry collect \
   --duration 180 --interval 0.5 --output data/telemetry
 
-traffic-mirror dataset build \
+motion dataset build \
   data/telemetry/session-a.csv data/telemetry/session-b.csv \
   --output data/telemetry/behavioral.csv
 
-traffic-mirror model train \
+motion model train \
   --dataset data/telemetry/behavioral.csv \
   --output artifacts/models/traffic_aimodel.pkl
 
-traffic-mirror model infer \
+motion model infer \
   --model artifacts/models/traffic_aimodel.pkl \
   --stats-output outputs/realtime_inference_results.txt
 ```
@@ -305,8 +307,8 @@ The reproducible offline gate is:
 python -m pip check
 python -m ruff check src tests
 python -m ruff format --check src tests
-python -m mypy src/traffic_mirror
-python -m pytest --cov=traffic_mirror --cov-report=term-missing
+python -m mypy src/motion
+python -m pytest --cov=motion --cov-report=term-missing
 python -m build
 ```
 

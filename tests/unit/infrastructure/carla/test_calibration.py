@@ -3,10 +3,10 @@ from __future__ import annotations
 from pathlib import Path
 from types import SimpleNamespace
 
-from traffic_mirror.domain.geography import BoundingBox
-from traffic_mirror.domain.maps import MapProfile
-from traffic_mirror.domain.traffic import TrafficSegment
-from traffic_mirror.infrastructure.carla.calibration import check_loaded_world
+from motion.domain.geography import BoundingBox
+from motion.domain.maps import MapProfile
+from motion.domain.traffic import TrafficSegment
+from motion.infrastructure.carla.calibration import check_loaded_world
 
 
 class FakeProjector:

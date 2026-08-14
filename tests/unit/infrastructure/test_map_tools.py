@@ -6,20 +6,20 @@ from types import SimpleNamespace
 
 import pytest
 
-from traffic_mirror.domain.geography import BoundingBox
-from traffic_mirror.domain.maps import KEPT_WAY_TYPES, MapProfile
-from traffic_mirror.infrastructure.maps.converter import (
+from motion.domain.geography import BoundingBox
+from motion.domain.maps import KEPT_WAY_TYPES, MapProfile
+from motion.infrastructure.maps.converter import (
     CarlaOsmToOpenDriveConverter,
     MapConversionError,
 )
-from traffic_mirror.infrastructure.maps.geometry import (
+from motion.infrastructure.maps.geometry import (
     patch_object_overflows,
     patch_zero_length_geometries,
     scan_degenerate_geometries,
     scan_object_overflows,
 )
-from traffic_mirror.infrastructure.maps.osm_inspection import inspect_osm
-from traffic_mirror.infrastructure.maps.projection import build_geo_transform
+from motion.infrastructure.maps.osm_inspection import inspect_osm
+from motion.infrastructure.maps.projection import build_geo_transform
 
 FIXTURES = Path(__file__).resolve().parents[2] / "fixtures" / "maps"
 
@@ -96,7 +96,7 @@ def test_carla_converter_is_lazy_and_writes_the_declared_profile(tmp_path, monke
         Osm2Odr=FakeOsm2Odr,
     )
     monkeypatch.setattr(
-        "traffic_mirror.infrastructure.maps.converter.importlib.import_module",
+        "motion.infrastructure.maps.converter.importlib.import_module",
         lambda name: fake_carla if name == "carla" else None,
     )
 
@@ -123,7 +123,7 @@ def test_carla_converter_reports_missing_api_without_import_side_effects(
         raise ImportError
 
     monkeypatch.setattr(
-        "traffic_mirror.infrastructure.maps.converter.importlib.import_module",
+        "motion.infrastructure.maps.converter.importlib.import_module",
         missing,
     )
     with pytest.raises(MapConversionError, match="CARLA Python API"):
