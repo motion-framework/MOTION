@@ -108,14 +108,23 @@ class ActiveMapStateRepository:
             raise RuntimeStateError(f"Active map state not found: {self.path}") from error
         except (OSError, json.JSONDecodeError) as error:
             raise RuntimeStateError(f"Cannot read active map state: {self.path}") from error
-        return _state_from_payload(payload)
+        if not isinstance(payload, dict):
+            raise RuntimeStateError("Active map state must be a JSON object")
+        if payload.get("schema_version") != RUNTIME_STATE_SCHEMA_VERSION:
+            raise RuntimeStateError("Unsupported active map state schema version")
+        return active_map_state_from_payload(payload)
 
 
-def _state_from_payload(payload: Any) -> ActiveMapState:
+def active_map_state_from_payload(payload: Any) -> ActiveMapState:
+    """Parse an ``ActiveMapState`` from its own fields, without a schema-version
+    check -- that check applies to a top-level persisted document, not to an
+    ``ActiveMapState`` embedded inside another record (for example UC-02/
+    UC-03's ``ScenarioRecord.baseline_state``, which carries its own top-level
+    schema version instead). Public so those embedding records can reuse this
+    exact parsing instead of duplicating it.
+    """
     if not isinstance(payload, dict):
         raise RuntimeStateError("Active map state must be a JSON object")
-    if payload.get("schema_version") != RUNTIME_STATE_SCHEMA_VERSION:
-        raise RuntimeStateError("Unsupported active map state schema version")
     try:
         bbox_payload = payload["bbox"]
         registry = {
