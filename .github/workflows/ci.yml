@@ -2,7 +2,9 @@ name: CI
 
 on:
   push:
+    branches: ["**"]
   pull_request:
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -14,25 +16,27 @@ concurrency:
 
 jobs:
   quality:
-    name: Quality and build (Python 3.12)
-    runs-on: ubuntu-latest
+    name: Native quality and package build
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
-          python-version: "3.12"
+          python-version: "3.12.13"
           cache: pip
-          cache-dependency-path: pyproject.toml
+          cache-dependency-path: |
+            pyproject.toml
+            constraints.txt
 
       - name: Install project and quality dependencies
         run: |
-          python -m pip install --upgrade pip
-          python -m pip install --editable ".[dev,ml]"
+          python -m pip install --constraint constraints.txt setuptools wheel
+          python -m pip install --no-build-isolation --constraint constraints.txt --editable ".[dev,ml]"
           python -m pip check
 
       - name: Lint
@@ -44,12 +48,67 @@ jobs:
       - name: Type check
         run: python -m mypy src/motion
 
+      - name: Smoke test native CLI
+        run: |
+          motion --help
+          motion uc-status --json
+
       - name: Run offline tests with coverage
         run: >-
           python -m pytest
           --cov=motion
           --cov-report=term-missing
-          --cov-report=xml
 
       - name: Build distributions
-        run: python -m build
+        run: python -m build --no-isolation
+
+  container:
+    name: Container gate (${{ matrix.architecture }})
+    needs: quality
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - architecture: amd64
+            runner: ubuntu-24.04
+            carla_client: true
+          - architecture: arm64
+            runner: ubuntu-24.04-arm
+            carla_client: false
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Validate Compose model
+        run: |
+          docker compose config --quiet
+          docker compose --profile test --profile carla-client config --quiet
+
+      - name: Build MOTION runtime image
+        run: docker compose build motion
+
+      - name: Smoke test containerized CLI
+        run: |
+          docker compose run --rm --no-deps motion --help
+          docker compose run --rm --no-deps motion uc-status --json
+          docker compose run --rm --no-deps --entrypoint python motion \
+            -c "import motion; print(motion.__version__)"
+          docker compose run --rm --no-deps --entrypoint python motion -m pip check
+
+      - name: Build and smoke test external CARLA client image
+        if: matrix.carla_client
+        run: |
+          docker compose --profile carla-client build motion-carla
+          docker compose --profile carla-client run --rm --no-deps \
+            --entrypoint python motion-carla \
+            -c "import carla, motion; print(motion.__version__)"
+          docker compose --profile carla-client run --rm --no-deps \
+            --entrypoint python motion-carla -m pip check
+
+      - name: Build and run offline container tests
+        run: |
+          docker compose --profile test build motion-test
+          docker compose --profile test run --rm --no-deps motion-test

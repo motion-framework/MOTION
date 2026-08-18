@@ -96,6 +96,9 @@ and migration record are in
 
 ```text
 .
+├── Dockerfile                     runtime and offline-test image targets
+├── compose.yaml                   MOTION runtime and offline-test workflows
+├── constraints.txt                reproducible container/CI resolution
 ├── pyproject.toml                 package, tools and dependency contracts
 ├── src/motion/
 │   ├── application/              provisioning, selection and UC services
@@ -109,7 +112,7 @@ and migration record are in
 ├── docs/                         architecture, UCs and regression evidence
 ├── data/reference/               curated source/reference data with provenance
 ├── artifacts/reference/          curated legacy model with provenance
-└── .github/workflows/ci.yml      reproducible offline quality gate
+└── .github/workflows/ci.yml       native and container quality gates
 ```
 
 Generated maps, telemetry, models, output and runtime state are ignored by Git.
@@ -129,24 +132,26 @@ python -m pip install --upgrade pip
 python -m pip install --editable .
 ```
 
-Install the behavioral-analysis or contributor dependencies as needed:
+Install only the optional dependency groups required by the commands you intend
+to run:
 
 ```bash
+python -m pip install --editable ".[carla]"
 python -m pip install --editable ".[ml]"
 python -m pip install --editable ".[dev,ml]"
 ```
 
-`pyproject.toml` is the only dependency source of truth; the repository does not
+`pyproject.toml` is the package dependency contract; the repository does not
 maintain a duplicate `requirements.txt`. In `pip install --editable ".[ml]"`,
 `--editable` links the checkout into the environment and `[ml]` selects the
 behavioral-analysis extra. For a non-editable installation use
 `python -m pip install ".[ml]"`.
 
-CARLA is not a PyPI dependency. Install a CARLA Python API wheel that matches
-the simulator and Python interpreter, and configure the simulator executable
-separately. The inherited implementation targeted CARLA 0.9.16; live CARLA
-execution is outside the current offline gate, so compatibility with a
-particular platform/wheel must be checked in that target environment.
+CARLA is not a core dependency. The optional `[carla]` extra pins the official
+Python client to 0.9.16, matching the external simulator version targeted by
+this repository. PyPI provides that release only as Windows and Linux x86-64
+wheels. Live interoperability is outside the offline gate and must be checked
+against the selected simulator host.
 
 ## Configuration
 
@@ -168,11 +173,63 @@ are:
 | `MIRROR_ROAD_FILTER` | Optional case-insensitive road-name filter. | empty |
 | `MIRROR_GEO_FILTER`, `MIRROR_ANCHOR_FC` | Optional registered-area/functional-class filters. | disabled, empty |
 
+Inside Compose, `CARLA_HOST` defaults to `host.docker.internal`; set it to a
+DNS name or IP address when CARLA runs on another machine. The application
+default remains `localhost` for native Python execution.
+
 `.env` contains static local configuration and secrets only.  Provisioning
 writes generated state atomically to `var/runtime/active_map.json`, including
 the active bbox, map paths, device registry and selection filters.  A read-only
 compatibility loader accepts former `MAP_*` environment variables but never
 rewrites `.env`.
+
+## Docker and Compose
+
+MOTION can run in Docker without a host Python installation. CARLA remains an
+external simulator and is never started by Compose.
+
+### Commands that do not require CARLA
+
+Build the default image and run the CLI:
+
+```bash
+docker compose build motion
+docker compose run --rm --no-deps motion --help
+docker compose run --rm --no-deps motion uc-status --json
+```
+
+Run the offline suite with:
+
+```bash
+docker compose --profile test build motion-test
+docker compose --profile test run --rm --no-deps motion-test
+```
+
+These images include the core, ML and test dependencies but omit the CARLA
+client. They support CLI inspection, map inspection, dataset and model commands,
+and all tests that use local fixtures or fake external boundaries.
+
+### Commands that require CARLA
+
+Start CARLA 0.9.16 separately, then build the image containing the matching
+Python client:
+
+```bash
+docker compose --profile carla-client build motion-carla
+docker compose --profile carla-client run --rm --no-deps \
+  motion-carla mirror --offline --once
+```
+
+The mirror command also requires an active map. On Docker Desktop, Compose uses
+`host.docker.internal` when `CARLA_HOST` is unset; set `CARLA_HOST` to a DNS name
+or IP address for a remote simulator. The default ports are 2000 for RPC, 2001
+for streaming and 8000 for the Traffic Manager.
+
+Compose reads the existing MOTION environment variables and bind-mounts
+`data/`, `artifacts/`, `var/` and `outputs/`. Generated files therefore remain
+in the checkout after a container is removed. See
+[docs/docker.md](docs/docker.md) for map provisioning, configuration, platform
+support and troubleshooting.
 
 ## Quick start
 
@@ -301,23 +358,34 @@ of the historical estimator in [docs/model-card.md](docs/model-card.md).
 
 ## Testing and quality gates
 
-The reproducible offline gate is:
+To run locally the checks used by the native CI job:
 
 ```bash
+python -m pip install --constraint constraints.txt setuptools wheel
+python -m pip install --no-build-isolation --constraint constraints.txt --editable ".[dev,ml]"
 python -m pip check
 python -m ruff check src tests
 python -m ruff format --check src tests
 python -m mypy src/motion
 python -m pytest --cov=motion --cov-report=term-missing
-python -m build
+python -m build --no-isolation
 ```
 
-Characterization tests preserve exact original numerical behavior.  Unit tests
-exercise domain/application contracts and fake CARLA objects.  Integration
-tests cover filesystem, data and model persistence without live services.
-The current suite is entirely offline and contains no live CARLA, HERE or
-Overpass validation. See [docs/testing.md](docs/testing.md) and the complete
-[non-regression matrix](docs/non-regression.md).
+The containerized offline test gate is:
+
+```bash
+docker compose --profile test build motion-test
+docker compose --profile test run --rm --no-deps motion-test
+```
+
+Characterization tests lock the legacy numerical outputs. Unit tests exercise
+domain and application contracts with fake CARLA objects; integration tests
+cover filesystem, data and model persistence without live services. CI runs the
+native gate and validates the Compose model, CLI and offline container suite on
+Linux amd64 and arm64. The amd64 job also imports the optional CARLA client.
+Neither path contacts CARLA, HERE or Overpass. See
+[docs/testing.md](docs/testing.md) and the complete [non-regression
+matrix](docs/non-regression.md).
 
 ## Outputs and artifacts
 
@@ -348,7 +416,10 @@ account and service terms.
   evaluation is more leakage-prone and is labeled accordingly.
 - Independent segment rounding can exceed the nominal total by one; this
   baseline behavior is frozen by characterization tests.
-- CARLA/platform/wheel compatibility must be validated in the deployment target.
+- The official CARLA 0.9.16 client wheel is x86-64; the default MOTION and test
+  images omit that client and also build on Linux arm64.
+- Compose does not start CARLA. Live simulator interoperability was not part of
+  the ordinary CI gate.
 
 ## External resources 
 

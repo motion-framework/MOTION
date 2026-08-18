@@ -22,6 +22,9 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+carla = [
+    "carla==0.9.16",
+]
 ml = [
     "joblib==1.5.3",
     "numpy==2.3.4",
