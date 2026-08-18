@@ -54,13 +54,33 @@ jobs:
           motion uc-status --json
 
       - name: Run offline tests with coverage
-        run: >-
-          python -m pytest
-          --cov=motion
-          --cov-report=term-missing
+        run: |
+          mkdir -p reports
+          python -m pytest \
+            --junitxml=reports/junit.xml \
+            --cov=motion \
+            --cov-report=term-missing \
+            --cov-report=xml:reports/coverage.xml
+
+      - name: Upload test and coverage reports
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: native-test-reports-attempt-${{ github.run_attempt }}
+          path: reports/
+          if-no-files-found: warn
+          retention-days: 14
 
       - name: Build distributions
         run: python -m build --no-isolation
+
+      - name: Upload Python distributions
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: python-distributions-attempt-${{ github.run_attempt }}
+          path: dist/
+          if-no-files-found: error
+          retention-days: 14
 
   container:
     name: Container gate (${{ matrix.architecture }})

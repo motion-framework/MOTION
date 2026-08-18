@@ -36,6 +36,10 @@ smoke-test the CLI and run the suite in `motion-test` with networking disabled.
 The amd64 runner also builds `motion-carla` and verifies that the CARLA client
 can be imported. Compose does not define or start a simulator service.
 
+The native job retains the JUnit and coverage XML reports, wheel and source
+distribution as workflow artifacts for 14 days. These artifacts are diagnostic
+and are not published as a MOTION release.
+
 Run the container gate locally with:
 
 ```bash
