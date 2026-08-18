@@ -40,13 +40,13 @@ jobs:
           python -m pip check
 
       - name: Lint
-        run: python -m ruff check src tests
+        run: python -m ruff check src tests .github/scripts
 
       - name: Check formatting
-        run: python -m ruff format --check src tests
+        run: python -m ruff format --check src tests .github/scripts
 
       - name: Type check
-        run: python -m mypy src/motion
+        run: python -m mypy src/motion .github/scripts
 
       - name: Smoke test native CLI
         run: |
@@ -62,15 +62,6 @@ jobs:
             --cov-report=term-missing \
             --cov-report=xml:reports/coverage.xml
 
-      - name: Upload test and coverage reports
-        if: always()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-        with:
-          name: native-test-reports-attempt-${{ github.run_attempt }}
-          path: reports/
-          if-no-files-found: warn
-          retention-days: 14
-
       - name: Build distributions
         run: python -m build --no-isolation
 
@@ -81,6 +72,21 @@ jobs:
           path: dist/
           if-no-files-found: error
           retention-days: 14
+
+      - name: Upload test and coverage reports
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: native-test-reports-attempt-${{ github.run_attempt }}
+          path: reports/
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Write native quality summary
+        if: always()
+        env:
+          JOB_STATUS: ${{ job.status }}
+        run: python .github/scripts/write_ci_summary.py
 
   container:
     name: Container gate (${{ matrix.architecture }})
