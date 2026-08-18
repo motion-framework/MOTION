@@ -38,7 +38,7 @@ class ActiveMapState:
 
     def to_profile(self, project_paths: ProjectPaths) -> MapProfile:
         def resolved(path_text: str) -> Path:
-            path = Path(path_text)
+            path = Path(path_text.replace("\\", "/"))
             candidate = (path if path.is_absolute() else project_paths.root / path).resolve()
             try:
                 candidate.relative_to(project_paths.root.resolve())
@@ -73,8 +73,8 @@ class ActiveMapState:
         return cls(
             name=name,
             bbox=bbox,
-            osm_path=str(project_paths.map_osm_path(name).relative_to(project_paths.root)),
-            xodr_path=str(project_paths.map_xodr_path(name).relative_to(project_paths.root)),
+            osm_path=project_paths.map_osm_path(name).relative_to(project_paths.root).as_posix(),
+            xodr_path=project_paths.map_xodr_path(name).relative_to(project_paths.root).as_posix(),
             device_registry=dict(device_registry or {}),
             road_filter=road_filter,
             geo_filter=geo_filter,
@@ -184,10 +184,10 @@ def legacy_state_from_environment(values: Mapping[str, str], paths: ProjectPaths
                 north_east_lon=float(values["MAP_NE_LON"]),
             ),
             osm_path=values.get(
-                "MAP_OSM_PATH", str(paths.map_osm_path(name).relative_to(paths.root))
+                "MAP_OSM_PATH", paths.map_osm_path(name).relative_to(paths.root).as_posix()
             ),
             xodr_path=values.get(
-                "MAP_XODR_PATH", str(paths.map_xodr_path(name).relative_to(paths.root))
+                "MAP_XODR_PATH", paths.map_xodr_path(name).relative_to(paths.root).as_posix()
             ),
             device_registry=registry,
             road_filter=values.get("MIRROR_ROAD_FILTER", ""),
