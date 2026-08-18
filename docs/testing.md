@@ -6,9 +6,9 @@
 python -m pip install --constraint constraints.txt setuptools wheel
 python -m pip install --no-build-isolation --constraint constraints.txt --editable ".[dev,ml]"
 python -m pip check
-python -m ruff check src tests
-python -m ruff format --check src tests
-python -m mypy src/motion
+python -m ruff check src tests .github/scripts
+python -m ruff format --check src tests .github/scripts
+python -m mypy src/motion .github/scripts
 python -m pytest --cov=motion
 python -m build --no-isolation
 ```
@@ -35,6 +35,11 @@ Linux amd64 and arm64 runners validate the Compose model, build `motion`,
 smoke-test the CLI and run the suite in `motion-test` with networking disabled.
 The amd64 runner also builds `motion-carla` and verifies that the CARLA client
 can be imported. Compose does not define or start a simulator service.
+
+The native job retains the JUnit and coverage XML reports, wheel and source
+distribution as workflow artifacts for 14 days. These artifacts are diagnostic
+and are not published as a MOTION release. The workflow summary shows aggregate
+test results, test categories, coverage and the generated distribution files.
 
 Run the container gate locally with:
 

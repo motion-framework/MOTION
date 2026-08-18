@@ -364,9 +364,9 @@ To run locally the checks used by the native CI job:
 python -m pip install --constraint constraints.txt setuptools wheel
 python -m pip install --no-build-isolation --constraint constraints.txt --editable ".[dev,ml]"
 python -m pip check
-python -m ruff check src tests
-python -m ruff format --check src tests
-python -m mypy src/motion
+python -m ruff check src tests .github/scripts
+python -m ruff format --check src tests .github/scripts
+python -m mypy src/motion .github/scripts
 python -m pytest --cov=motion --cov-report=term-missing
 python -m build --no-isolation
 ```
