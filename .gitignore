@@ -37,6 +37,7 @@ pip-wheel-metadata/
 
 # IDE and operating-system state
 .idea/
+.mcp.json
 .vscode/
 .vs/
 *.iml
