@@ -76,8 +76,9 @@ docker compose --profile carla-client run --rm --no-deps \
 ```
 
 Provisioning needs Internet access but does not need a running CARLA server.
-The [README quick start](../README.md#quick-start) documents the corresponding
-native commands and the HERE-assisted road-selection flow.
+The [UC-01 README](../src/motion/application/use_cases/uc01_real_time_traffic_mirroring/README.md)
+documents the corresponding native commands and the HERE-assisted
+road-selection flow.
 
 Run a single UC-01 tick without HERE or Overpass access:
 
