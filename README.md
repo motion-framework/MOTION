@@ -258,6 +258,10 @@ payloads that match the HERE v7 subset consumed by this project:
 motion mirror --offline --once
 ```
 
+See [the UC-01 README](src/motion/application/use_cases/uc01_real_time_traffic_mirroring/README.md)
+for the full walkthrough, segment filtering rules, the per-tick dashboard and
+troubleshooting.
+
 Offline mode still requires a reachable CARLA simulator. It does not construct
 an HTTP client, provision a map or accept road-selection coordinates. Synthetic
 flow payloads use the HERE `results`/`location`/`currentFlow` structure and pass

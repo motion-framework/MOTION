@@ -98,7 +98,9 @@ Every step reuses UC-01's existing ports and services; only the "never touch
 documented approximations are in [scenario-kpis.md](scenario-kpis.md); the
 exact CLI commands and generated file layout are in each package's own
 README (`src/motion/application/use_cases/uc02_what_if_scenario/README.md`,
-`.../uc03_infrastructure_event_simulation/README.md`).
+`.../uc03_infrastructure_event_simulation/README.md`); UC-01's own flow is
+documented the same way in
+`src/motion/application/use_cases/uc01_real_time_traffic_mirroring/README.md`.
 
 ## Configuration and state
 
