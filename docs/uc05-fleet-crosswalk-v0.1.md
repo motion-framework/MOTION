@@ -1,146 +1,136 @@
-# UC-05 — Crosswalk candidato ACI → ISPRA → COPERT 5.9.2
+# UC-05 — Candidate ACI–ISPRA–COPERT fleet crosswalk
 
-| Campo | Valore |
-|---|---|
-| Versione del metodo | 0.1 |
-| Revisione editoriale | 21/08/2026 |
-| Stato | Allegato metodologico in Working Draft |
-| Ambito | Costruzione offline dei profili `CAR`, `MOTORCYCLE`, `BUS` e `TRUCK` usati per derivare fattori emissivi medi di CO₂ |
+## Scope
 
-## 1. Scopo e relazione con UC-05
+This document describes a candidate method for converting vehicle-fleet data
+into profiles compatible with COPERT 5.9.2. The profiles weight the emission
+factors of individual technologies to obtain a mean factor for each vehicle
+category observed by FRONTIERE.
 
-Questo documento descrive una metodologia candidata per trasformare i dati
-disponibili sul parco veicolare in profili compatibili con COPERT 5.9.2.
-Il profilo risultante permette di aggregare i fattori emissivi delle singole
-tecnologie in un fattore medio per ciascuna macro-categoria osservata da
-FRONTIERE.
+The crosswalk is an offline preparation step, outside the UC-05 runtime flow.
+The proposed runtime receives passage counts, selects previously prepared
+emission factors and calculates emissions for the segment and interval.
 
-Il crosswalk è un'attività di supporto **offline** e non fa parte del flusso
-runtime principale di UC-05. A runtime UC-05 riceve i transiti, associa i
-fattori emissivi già disponibili e calcola la stima sul segmento e
-sull'intervallo considerati.
+The method has not been scientifically approved. Its rules provide a
+reproducible basis that can be replaced or calibrated when more representative
+local observations become available. The rules and preliminary results below
+refer to method version 0.1, documented on 21 August 2026.
 
-La metodologia non è ancora approvata scientificamente. Offre una base
-riproducibile che potrà essere sostituita o calibrata quando saranno
-disponibili osservazioni locali più rappresentative.
+## Data sources
 
-## 2. Fonti e ruolo dei dati
-
-| Fonte | Uso nel metodo | Limite principale |
+| Source | Role in the method | Main limitation |
 |---|---|---|
-| ACI Open Parco Veicoli, Salerno 2024 | Composizione locale dello stock per categoria, alimentazione e classe Euro. | Lo stock immatricolato non coincide necessariamente con i veicoli che transitano a Baronissi. |
-| ISPRA, `DatiCopertTrasportoStrada1990-2024.xlsx`, basato su COPERT 5.8.1 | Quote nazionali di attività/VKT usate per disaggregare dimensioni non disponibili nei dati ACI. | È un proxy nazionale e non descrive direttamente il traffico locale. |
-| COPERT 5.9.2 Tier 3 | Calcolo dei fattori di emissione hot tailpipe per tecnologia e velocità. | Richiede una flotta e condizioni di guida configurate; gli output devono essere validati per l'uso progettuale. |
-| FRONTIERE | Conteggi di transiti classificati nelle macro-categorie osservabili. | Tassonomia effettiva, qualità del conteggio e trattamento delle classi ambigue sono ancora da confermare. |
+| ACI Open Parco Veicoli, Salerno 2024 | Local registered stock by category, fuel and Euro class. | Registered stock does not necessarily represent the vehicles travelling through Baronissi. |
+| ISPRA, `DatiCopertTrasportoStrada1990-2024.xlsx`, based on COPERT 5.8.1 | National activity/VKT shares used to disaggregate dimensions absent from ACI data. | A national proxy does not directly describe local traffic. |
+| COPERT 5.9.2 Tier 3 | Hot tailpipe emission factors by technology and speed. | Requires a configured fleet and driving conditions; outputs need validation for project use. |
+| FRONTIERE | Passage counts classified into observable vehicle categories. | The actual taxonomy, count quality and treatment of ambiguous classes remain to be confirmed. |
 
-I dati ISPRA 5.8.1 sono usati esclusivamente per comporre la flotta. Non viene
-effettuata una conversione di fattori emissivi da COPERT 5.8.1 a 5.9.2: i
-fattori sono ricalcolati direttamente con COPERT 5.9.2.
+ISPRA 5.8.1 data are used only to compose the fleet. Emission factors are not
+converted from COPERT 5.8.1 to 5.9.2: they are recalculated directly with
+COPERT 5.9.2.
 
-## 3. Tipi di corrispondenza
+## Mapping types
 
-| Stato | Significato |
+| Status | Meaning |
 |---|---|
-| `DIRECT` | La classificazione sorgente è compatibile con la famiglia COPERT necessaria. |
-| `PROXY` | La corrispondenza usa un'approssimazione esplicita. |
-| `CONDITIONAL` | La regola dipende dalla tassonomia che FRONTIERE renderà effettivamente disponibile. |
-| `UNMAPPED` | Non esiste ancora una corrispondenza utilizzabile; la quota deve restare dichiarata. |
+| `DIRECT` | The source classification is compatible with the required COPERT family. |
+| `PROXY` | The mapping uses an explicit approximation. |
+| `CONDITIONAL` | The rule depends on the taxonomy FRONTIERE makes available. |
+| `UNMAPPED` | No usable mapping is available; the corresponding share must remain reported. |
 
-Lo stato si riferisce alla singola dimensione. Per esempio, una categoria può
-essere diretta mentre cilindrata, massa o segmento COPERT sono ottenuti tramite
-proxy.
+Status applies to an individual dimension. A category can map directly while
+engine displacement, mass or COPERT segment is assigned through a proxy.
 
-## 4. Macro-categorie veicolari
+## Vehicle categories
 
-| Categoria MOTION | ID COCO atteso | Sorgente ACI 2024 | Stock Salerno | Regola candidata |
+| MOTION category | Expected COCO ID | ACI 2024 source | Salerno stock | Candidate rule |
 |---|---:|---|---:|---|
-| `CAR` | 2 | `AV` — Autovetture | 737.963 | Usare l'intera categoria AV. |
-| `MOTORCYCLE` | 3 | `MC` — Motocicli | 138.710 | Usare MC; l'eventuale inclusione dei ciclomotori dipende dalla semantica FRONTIERE. |
-| `BUS` | 5 | `AB` — Autobus | 2.233 | Usare l'intera categoria AB. |
-| `TRUCK` | 7 | `AM` — Autocarri merci + `TS` — Trattori stradali | 94.162 | Creare un profilo aggregato LCV/HDT finché FRONTIERE espone una sola classe `truck`. |
-| `SPECIAL_TBD` | — | `AS` — Autoveicoli speciali/specifici | 15.991 | Conservare separatamente; non includere automaticamente in `TRUCK`. |
+| `CAR` | 2 | `AV` — Passenger cars | 737,963 | Use the entire AV category. |
+| `MOTORCYCLE` | 3 | `MC` — Motorcycles | 138,710 | Use MC; inclusion of mopeds depends on FRONTIERE semantics. |
+| `BUS` | 5 | `AB` — Buses | 2,233 | Use the entire AB category. |
+| `TRUCK` | 7 | `AM` — Goods vehicles + `TS` — Road tractors | 94,162 | Build an aggregated LCV/HDT profile while FRONTIERE exposes a single `truck` class. |
+| `SPECIAL_TBD` | — | `AS` — Special-purpose vehicles | 15,991 | Keep separate; do not include automatically in `TRUCK`. |
 
-### 4.1 Opzioni predisposte per FRONTIERE
+### FRONTIERE taxonomy options
 
-- Se FRONTIERE espone soltanto `truck`, UC-05 usa il profilo aggregato
-  `TRUCK`, costruito da AM e TS.
-- Se FRONTIERE distingue commerciali leggeri e pesanti, possono essere creati
-  profili separati `TRUCK_LCV` e `TRUCK_HDV`.
-- Se FRONTIERE include i veicoli speciali in `truck`, l'eventuale integrazione
-  di AS richiede una nuova versione del profilo.
-- Se `motorcycle` comprende anche i ciclomotori, il profilo deve includere i
-  segmenti moped usando una fonte integrativa, poiché il dataset ACI MC
-  disponibile copre i motocicli oltre 50 cm³.
+- If FRONTIERE exposes only `truck`, UC-05 uses the aggregated `TRUCK` profile
+  built from AM and TS.
+- If FRONTIERE distinguishes light and heavy commercial vehicles, separate
+  `TRUCK_LCV` and `TRUCK_HDV` profiles can be created.
+- If FRONTIERE includes special-purpose vehicles in `truck`, incorporating AS
+  requires a new profile version.
+- If `motorcycle` includes mopeds, the profile needs moped segments from an
+  additional source: the available ACI MC dataset covers motorcycles above
+  50 cm³.
 
-## 5. Alimentazioni
+## Fuels and powertrains
 
-Le principali regole candidate sono riepilogate di seguito. Le
-semplificazioni indicate come proxy restano visibili nel profilo.
+The candidate rules below retain the approximations marked as proxies in the
+resulting profile.
 
-| Codici ACI | Interpretazione nel profilo COPERT | Nota |
+| ACI codes | Interpretation in the COPERT profile | Note |
 |---|---|---|
-| `BE` | Petrol | Diretto per CAR, MOTORCYCLE e TRUCK; proxy per BUS. |
-| `GA`, `GG` | Diesel | `GA` è diretto per CAR, BUS e TRUCK; gli altri casi sono proxy. |
-| `EL` | Battery Electric | Contributo pari a zero nel perimetro **hot tailpipe CO₂**; non implica zero emissioni nel ciclo di vita. |
-| `BG`, `IBG` | LPG Bifuel per CAR; Petrol negli altri profili | La componente ibrida non è rappresentata quando manca una tecnologia equivalente. |
-| `BM`, `IBM`, `IM`, `ME` | CNG/CNG Bifuel dove disponibile | Il collasso della tecnologia è un proxy quando la granularità ACI non è esposta da COPERT. |
-| `IB` | Petrol Hybrid per CAR; Petrol negli altri profili | Diretto soltanto per CAR. |
-| `IG` | Diesel Hybrid per BUS; Diesel negli altri profili | Non viene interpretato automaticamente come Diesel PHEV. |
-| `IGG`, `IGM` | Diesel | Proxy conservativo. |
-| `AL` | Petrol per MOTORCYCLE; non mappato negli altri profili | Il mapping dei motocicli conserva la quota ma richiede validazione. |
-| `ND` | Non mappato | Non viene trasformato in zero né scartato implicitamente. |
+| `BE` | Petrol | Direct for CAR, MOTORCYCLE and TRUCK; proxy for BUS. |
+| `GA`, `GG` | Diesel | `GA` maps directly for CAR, BUS and TRUCK; the other cases are proxies. |
+| `EL` | Battery Electric | Zero contribution within the hot tailpipe CO₂ boundary; this does not imply zero life-cycle emissions. |
+| `BG`, `IBG` | LPG Bifuel for CAR; Petrol for the other profiles | The hybrid component is not represented when no equivalent technology exists. |
+| `BM`, `IBM`, `IM`, `ME` | CNG/CNG Bifuel where available | Combining technologies is a proxy when COPERT does not expose the ACI granularity. |
+| `IB` | Petrol Hybrid for CAR; Petrol for the other profiles | Direct only for CAR. |
+| `IG` | Diesel Hybrid for BUS; Diesel for the other profiles | Not automatically interpreted as Diesel PHEV. |
+| `IGG`, `IGM` | Diesel | Conservative proxy. |
+| `AL` | Petrol for MOTORCYCLE; unmapped for the other profiles | The motorcycle mapping preserves the share but requires validation. |
+| `ND` | Unmapped | Neither converted to zero nor silently discarded. |
 
-### 5.1 Copertura dell'alimentazione nello snapshot analizzato
+### Fuel-mapping coverage
 
-| Categoria | Diretto | Proxy | Non mappato |
+| Category | Direct | Proxy | Unmapped |
 |---|---:|---:|---:|
-| `CAR` | 99,297% | 0,699% | 0,004% |
-| `MOTORCYCLE` | 93,752% | 6,245% | 0,002% |
-| `BUS` | 99,060% | 0,940% | 0,000% |
-| `TRUCK` | 96,473% | 3,524% | 0,003% |
+| `CAR` | 99.297% | 0.699% | 0.004% |
+| `MOTORCYCLE` | 93.752% | 6.245% | 0.002% |
+| `BUS` | 99.060% | 0.940% | 0.000% |
+| `TRUCK` | 96.473% | 3.524% | 0.003% |
 
-Queste percentuali descrivono soltanto la corrispondenza delle alimentazioni;
-non includono le approssimazioni necessarie per massa, cilindrata, tipo di bus
-o segmento COPERT.
+These percentages describe fuel mapping only. They exclude the approximations
+required for mass, engine displacement, bus type or COPERT segment.
 
-## 6. Classi Euro
+## Euro classes
 
-COPERT raggruppa alcune fasi regolamentari con una granularità diversa da ACI.
-Inoltre, la legenda pubblica ACI consultata non decodifica formalmente i
-suffissi `5B` e `6A`–`6E`. Le relative corrispondenze restano quindi un working
-mapping da confermare con ACI o ISPRA.
+COPERT groups some regulatory stages at a different granularity from ACI. The
+public ACI legend consulted also does not formally decode the `5B` and
+`6A`–`6E` suffixes. These correspondences remain working mappings to be
+confirmed with ACI or ISPRA.
 
-| Etichetta ACI | Passenger Cars / LCV | HDT / BUS | L-Category | Stato |
+| ACI label | Passenger Cars / LCV | HDT / BUS | L-Category | Status |
 |---|---|---|---|---|
-| `EURO 0` | Stadi pre-Euro compatibili / `Conventional` | `Conventional` | `Conventional` | Proxy per le autovetture; diretto verso `Conventional` negli altri casi. |
-| `EURO 1`–`EURO 4` | `Euro 1`–`Euro 4` | `Euro I`–`Euro IV` | `Euro 1`–`Euro 4` | Diretto. |
-| `EURO 5` | `Euro 5` | `Euro V` | `Euro 5` | Diretto alla granularità COPERT. |
-| `EURO 5B` | `Euro 5` | `Euro V` | `Euro 5` | Raggruppato; suffisso ACI da confermare. |
-| `EURO 6` | Ripartizione tra `Euro 6 a/b/c`, `6 d-temp`, `6 d/e` | Ripartizione tra `Euro VI A/B/C` e `VI D/E` | `Euro 5` | Ripartizione proxy mediante quote ISPRA. |
-| `EURO 6A`–`EURO 6C` | `Euro 6 a/b/c` | `Euro VI A/B/C` | `Euro 5` | Working mapping; collasso proxy per L-Category. |
-| `EURO 6D` | `Euro 6 d-temp` | `Euro VI D/E` | `Euro 5` | Working mapping; collasso proxy per L-Category. |
-| `EURO 6E` | `Euro 6 d/e` | `Euro VI D/E` | `Euro 5` | Working mapping; collasso proxy per L-Category. |
-| `NC` con `EL` | Zero hot tailpipe | Zero hot tailpipe | Zero hot tailpipe | Valido soltanto nel perimetro emissivo dichiarato. |
-| `NC` non elettrico | — | — | — | Non mappato. |
-| `ND` | Distribuzione Euro ISPRA condizionata | Distribuzione Euro ISPRA condizionata | Distribuzione Euro ISPRA condizionata | Proxy; se anche il carburante è ND, resta non mappato. |
+| `EURO 0` | Compatible pre-Euro stages / `Conventional` | `Conventional` | `Conventional` | Proxy for passenger cars; direct mapping to `Conventional` in the other cases. |
+| `EURO 1`–`EURO 4` | `Euro 1`–`Euro 4` | `Euro I`–`Euro IV` | `Euro 1`–`Euro 4` | Direct. |
+| `EURO 5` | `Euro 5` | `Euro V` | `Euro 5` | Direct at COPERT granularity. |
+| `EURO 5B` | `Euro 5` | `Euro V` | `Euro 5` | Grouped; ACI suffix remains to be confirmed. |
+| `EURO 6` | Split across `Euro 6 a/b/c`, `6 d-temp`, `6 d/e` | Split across `Euro VI A/B/C` and `VI D/E` | `Euro 5` | Proxy split using ISPRA shares. |
+| `EURO 6A`–`EURO 6C` | `Euro 6 a/b/c` | `Euro VI A/B/C` | `Euro 5` | Working mapping; proxy grouping for L-Category. |
+| `EURO 6D` | `Euro 6 d-temp` | `Euro VI D/E` | `Euro 5` | Working mapping; proxy grouping for L-Category. |
+| `EURO 6E` | `Euro 6 d/e` | `Euro VI D/E` | `Euro 5` | Working mapping; proxy grouping for L-Category. |
+| `NC` with `EL` | Zero hot tailpipe | Zero hot tailpipe | Zero hot tailpipe | Valid only within the declared emissions boundary. |
+| Non-electric `NC` | — | — | — | Unmapped. |
+| `ND` | Conditional ISPRA Euro distribution | Conditional ISPRA Euro distribution | Conditional ISPRA Euro distribution | Proxy; if fuel is also ND, the record remains unmapped. |
 
-## 7. Costruzione dei pesi di flotta
+## Fleet weights
 
-ACI non espone tutte le dimensioni richieste da COPERT. Per ciascuna cella
-`categoria × alimentazione × Euro`, le quote di attività ISPRA sono usate per
-ripartire lo stock tra i segmenti compatibili:
+ACI does not expose every dimension required by COPERT. For each
+`category × fuel × Euro` cell, ISPRA activity shares distribute the stock
+among compatible segments:
 
 - `CAR`: Mini, Small, Medium, Large/SUV/Executive;
-- `MOTORCYCLE`: tempi del motore e classi di cilindrata disponibili;
-- `BUS`: urbano/coach e classi dimensionali;
-- `AM`: LCV e HDV rigidi;
-- `TS`: HDV articolati.
+- `MOTORCYCLE`: available engine-cycle and displacement classes;
+- `BUS`: urban/coach and size classes;
+- `AM`: LCV and rigid HDV;
+- `TS`: articulated HDV.
 
-Per evitare una doppia allocazione, AM non alimenta i segmenti articolati e TS
-non alimenta i segmenti rigidi.
+To avoid double allocation, AM does not contribute to articulated segments and
+TS does not contribute to rigid segments.
 
-Indicando con $S^{ACI}_{c,f,e}$ lo stock ACI e con
-$p^{ISPRA}_{i\mid c,f,e}$ la quota di attività ISPRA della tecnologia $i$:
+Let $S^{ACI}_{c,f,e}$ be the ACI stock and $p^{ISPRA}_{i\mid c,f,e}$ the ISPRA
+activity share for technology $i$:
 
 $$
 q_{c,i}=S^{ACI}_{c,f,e}\,p^{ISPRA}_{i\mid c,f,e}
@@ -150,90 +140,89 @@ $$
 w_{c,i}=\frac{q_{c,i}}{\sum_i q_{c,i}}
 $$
 
-Per ogni macro-categoria deve risultare $\sum_i w_{c,i}=1$. I pesi sono
-activity-oriented, ma restano un proxy perché combinano stock provinciale e
-quote VKT nazionali.
+For each vehicle category, $\sum_i w_{c,i}=1$. The weights are activity-oriented
+but remain a proxy because they combine provincial stock with national VKT
+shares.
 
-Quando manca la combinazione ISPRA esatta, la proposta usa nell'ordine:
+When the exact ISPRA combination is missing, the proposal uses, in order:
 
-1. la stessa categoria, alimentazione e classe Euro;
-2. la stessa categoria e alimentazione, con distribuzione Euro ISPRA 2024;
-3. per i BEV, una tecnologia virtuale con contributo hot tailpipe CO₂ nullo;
-4. in assenza di una corrispondenza utilizzabile, lo stato `UNMAPPED`.
+1. the same category, fuel and Euro class;
+2. the same category and fuel, with the ISPRA 2024 Euro distribution;
+3. for BEVs, a virtual technology with zero hot tailpipe CO₂ contribution;
+4. `UNMAPPED` when no usable correspondence is available.
 
-Non è previsto un fallback implicito tra alimentazioni differenti.
+There is no implicit fallback between different fuels.
 
-## 8. Esito preliminare del mapping
+## Preliminary mapping results
 
-L'applicazione delle regole precedenti allo snapshot Salerno 2024 ha prodotto
-il seguente esito. I valori documentano il working design e non costituiscono
-una validazione scientifica della rappresentatività della flotta.
+Applying these rules to the Salerno 2024 snapshot produced the following
+results. They document the working design and do not scientifically validate
+the representativeness of the fleet.
 
-| Categoria | Stock sorgente | Stock mappato | Diretto | Proxy | Condizionale | Non mappato | Tecnologie risultanti |
+| Category | Source stock | Mapped stock | Direct | Proxy | Conditional | Unmapped | Resulting technologies |
 |---|---:|---:|---:|---:|---:|---:|---:|
-| `CAR` | 737.963 | 737.937 | 54,997% | 38,938% | 6,062% | 0,004% | 130 |
-| `MOTORCYCLE` | 138.710 | 138.707 | 93,675% | 6,323% | 0,000% | 0,002% | 25 |
-| `BUS` | 2.233 | 2.233 | 78,818% | 10,255% | 10,927% | 0,000% | 49 |
-| `TRUCK` | 94.162 | 94.156 | 70,111% | 19,504% | 10,378% | 0,006% | 138 |
+| `CAR` | 737,963 | 737,937 | 54.997% | 38.938% | 6.062% | 0.004% | 130 |
+| `MOTORCYCLE` | 138,710 | 138,707 | 93.675% | 6.323% | 0.000% | 0.002% | 25 |
+| `BUS` | 2,233 | 2,233 | 78.818% | 10.255% | 10.927% | 0.000% | 49 |
+| `TRUCK` | 94,162 | 94,156 | 70.111% | 19.504% | 10.378% | 0.006% | 138 |
 
-Il mix principale ottenuto è:
+The resulting fuel and powertrain mix is:
 
-| Categoria | Composizione del profilo |
+| Category | Profile composition |
 |---|---|
-| `CAR` | Diesel 49,018%; Petrol 35,939%; LPG Bifuel 9,357%; CNG Bifuel 3,059%; Petrol Hybrid 2,311%; Battery Electric 0,316%. |
-| `MOTORCYCLE` | Petrol 99,765%; Battery Electric 0,235%. |
-| `BUS` | Diesel 99,328%; CNG 0,493%; Battery Electric 0,179%. |
-| `TRUCK` | Diesel 92,952%; Petrol 5,161%; CNG 1,724%; Battery Electric 0,164%; ripartizione LCV 55,006% e HDV 44,994%. |
+| `CAR` | Diesel 49.018%; Petrol 35.939%; LPG Bifuel 9.357%; CNG Bifuel 3.059%; Petrol Hybrid 2.311%; Battery Electric 0.316%. |
+| `MOTORCYCLE` | Petrol 99.765%; Battery Electric 0.235%. |
+| `BUS` | Diesel 99.328%; CNG 0.493%; Battery Electric 0.179%. |
+| `TRUCK` | Diesel 92.952%; Petrol 5.161%; CNG 1.724%; Battery Electric 0.164%; LCV 55.006% and HDV 44.994%. |
 
-La quota LCV/HDT è ottenuta dal proxy ISPRA nazionale: non è una misura del
-traffico locale di Salerno o Baronissi.
+The LCV/HDT share comes from the national ISPRA proxy. It is not a measurement
+of local traffic in Salerno or Baronissi.
 
-## 9. Uso dei pesi per ottenere gli EF
+## Emission factors from fleet weights
 
-Per ciascuna tecnologia COPERT $i$, il peso $w_{c,i}$ viene applicato al
-relativo fattore hot tailpipe di CO₂. Il fattore medio della macro-categoria è:
+For each COPERT technology $i$, weight $w_{c,i}$ is applied to its hot tailpipe
+CO₂ factor. The mean factor for a vehicle category is:
 
 $$
 EF_c(v)=\sum_i w_{c,i}\,EF_i(v)
 $$
 
-dove $v$ è la velocità rappresentativa del segmento e dell'intervallo. I BEV
-restano nel denominatore del profilo con contributo hot tailpipe pari a zero.
+Here, $v$ is the representative speed for the segment and interval. BEVs
+remain in the profile denominator with a zero hot tailpipe contribution.
 
-La metodologia candidata prevede di generare offline una matrice di EF su una
-griglia di velocità e di usare a runtime il valore corrispondente, o
-un'interpolazione tra nodi se approvata. Una modifica della composizione di
-flotta, della tassonomia o delle condizioni COPERT richiede la rigenerazione
-del profilo e degli EF; non richiede una chiamata COPERT per ogni intervallo di
-15 minuti.
+The candidate method generates an emission-factor matrix offline over a speed
+grid. Runtime processing selects the corresponding value or, if approved,
+interpolates between nodes. Changes to fleet composition, taxonomy or COPERT
+conditions require regenerated profiles and factors, not a COPERT call for
+each 15-minute interval.
 
-Il POC preliminare conservato nella repository è descritto in
+The preliminary proof of concept is documented in
 [`artifacts/reference/copert-poc-592/README.md`](../artifacts/reference/copert-poc-592/README.md).
-Il POC verifica il flusso di input/output COPERT, ma non rappresenta il profilo
-ACI/ISPRA pesato descritto in questo documento.
+It tests the COPERT input/output flow but does not represent the weighted
+ACI/ISPRA profile described here.
 
-## 10. Assunzioni e punti aperti
+## Assumptions and open issues
 
-1. Confermare il data dictionary FRONTIERE, in particolare la semantica di
-   `truck`, l'eventuale distinzione LCV/HDT e l'inclusione dei ciclomotori.
-2. Confermare con ACI o ISPRA la decodifica di `EURO 5B` e
-   `EURO 6A`–`EURO 6E`.
-3. Valutare la rappresentatività locale del proxy stock ACI × VKT ISPRA e,
-   quando possibile, calibrarlo con dati di traffico osservati a Baronissi.
-4. Decidere se e come includere gli autoveicoli speciali nel profilo `TRUCK`.
-5. Approvare versione COPERT, perimetro hot tailpipe, profili, griglia di
-   velocità, interpolazione e gestione delle velocità fuori dominio.
-6. Definire un protocollo di validazione e un'analisi di sensibilità prima di
-   considerare i fattori idonei all'uso operativo.
+1. Confirm the FRONTIERE data dictionary, particularly `truck` semantics,
+   any LCV/HDT distinction and the inclusion of mopeds.
+2. Confirm the interpretation of `EURO 5B` and `EURO 6A`–`EURO 6E` with ACI
+   or ISPRA.
+3. Assess whether the ACI stock × ISPRA VKT proxy represents local activity
+   and, where possible, calibrate it with observed traffic in Baronissi.
+4. Decide whether and how to include special-purpose vehicles in `TRUCK`.
+5. Approve the COPERT version, hot tailpipe boundary, profiles, speed grid,
+   interpolation and handling of speeds outside the domain.
+6. Define a validation protocol and sensitivity analysis before treating the
+   factors as suitable for operational use.
 
-## 11. Fonti
+## Sources
 
-- ACI Open Parco Veicoli, snapshot Salerno 2024 per AV, MC, AB, AM, TS e AS.
-- [ACI Open Parco Veicoli — legenda categorie e alimentazioni](https://opv.aci.it/WEBDMCircolante/legenda.html).
-- [ACI Open Parco Veicoli — note metodologiche](https://opv.aci.it/WEBDMCircolante/noteOPV.html).
-- ISPRA, `DatiCopertTrasportoStrada1990-2024.xlsx`, foglio `veickm`, dataset
-  basato su COPERT 5.8.1.
+- ACI Open Parco Veicoli, Salerno 2024 snapshot for AV, MC, AB, AM, TS and AS.
+- [ACI Open Parco Veicoli — category and fuel legend](https://opv.aci.it/WEBDMCircolante/legenda.html).
+- [ACI Open Parco Veicoli — methodological notes](https://opv.aci.it/WEBDMCircolante/noteOPV.html).
+- ISPRA, `DatiCopertTrasportoStrada1990-2024.xlsx`, `veickm` sheet, based on
+  COPERT 5.8.1.
 - [EMEP/EEA Road Transport Guidebook 2024](https://copert.emisia.com/wp-content/uploads/2024/07/1.A.3.b.i-iv-Road-transport-2024.pdf).
-- [Regolamento (UE) n. 459/2012](https://eur-lex.europa.eu/eli/reg/2012/459/oj/eng), fasi Euro 5a/5b e 6a/6b/6c.
-- [Regolamento (UE) 2017/1347](https://eur-lex.europa.eu/eli/reg/2017/1347/oj/eng) e [testo consolidato 2017/1151](https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX%3A02017R1151-20200125), fasi Euro 6d-TEMP e 6d.
-- COPERT 5.9.2, installazione Windows usata per i test progettuali.
+- [Regulation (EU) No 459/2012](https://eur-lex.europa.eu/eli/reg/2012/459/oj/eng), Euro 5a/5b and 6a/6b/6c stages.
+- [Regulation (EU) 2017/1347](https://eur-lex.europa.eu/eli/reg/2017/1347/oj/eng) and the [consolidated text of Regulation 2017/1151](https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX%3A02017R1151-20200125), Euro 6d-TEMP and 6d stages.
+- COPERT 5.9.2, the Windows installation used for project tests.
