@@ -131,6 +131,22 @@ def test_active_state_paths_cannot_escape_the_project_root(tmp_path) -> None:
         state.to_profile(paths)
 
 
+def test_active_state_accepts_existing_windows_relative_paths(tmp_path) -> None:
+    paths = ProjectPaths.discover(tmp_path)
+    state = ActiveMapState(
+        name="legacy-windows",
+        bbox=BoundingBox(40, 14, 41, 15),
+        osm_path=r"data\maps\legacy-windows\legacy-windows.osm",
+        xodr_path=r"data\maps\legacy-windows\legacy-windows_map.xodr",
+        device_registry={},
+    )
+
+    profile = state.to_profile(paths)
+
+    assert profile.osm_path == paths.map_osm_path("legacy-windows")
+    assert profile.xodr_path == paths.map_xodr_path("legacy-windows")
+
+
 def test_legacy_env_state_is_read_only_fallback(tmp_path) -> None:
     paths = ProjectPaths.discover(tmp_path)
     state = load_active_map_state(

@@ -131,9 +131,10 @@ behavioral incident label and is not an implementation of UC-04.
 
 - HERE and Overpass require network access; HERE additionally requires a local
   API key.  Ordinary tests use sanitised fixtures and fake transports.
-- CARLA is installed separately. The external `carla` module is loaded only
-  when a live adapter is constructed or a CARLA command is executed, so package
-  import and offline tests do not require it.
+- The CARLA simulator remains a separate runtime. Its Python client is available
+  through the optional `carla` extra and is loaded only when a live adapter is
+  constructed or a CARLA command is executed; package import and offline tests
+  do not require it.
 - pandas, scikit-learn, NumPy and joblib are in the `ml` extra.
 - matplotlib is in the `viz` extra, required only for UC-03's congestion-heatmap
   image rendering (`infrastructure.reporting.heatmap`); it is imported lazily,

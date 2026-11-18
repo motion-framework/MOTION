@@ -1,0 +1,54 @@
+name: motion
+
+x-motion-build: &motion-build
+  context: .
+  args:
+    MOTION_UID: ${MOTION_UID:-1000}
+    MOTION_GID: ${MOTION_GID:-1000}
+
+x-motion-runtime: &motion-runtime
+  init: true
+  stop_signal: SIGINT
+  stop_grace_period: 20s
+  env_file:
+    - path: .env
+      required: false
+  environment:
+    MOTION_PROJECT_ROOT: /workspace
+    CARLA_HOST: ${CARLA_HOST:-host.docker.internal}
+    CARLA_PORT: "${CARLA_PORT:-2000}"
+    CARLA_TRAFFIC_MANAGER_PORT: "${CARLA_TRAFFIC_MANAGER_PORT:-8000}"
+    CARLA_EXECUTABLE_PATH: ""
+  extra_hosts:
+    - "host.docker.internal:host-gateway"
+  volumes:
+    - ./data:/workspace/data
+    - ./artifacts:/workspace/artifacts
+    - ./var:/workspace/var
+    - ./outputs:/workspace/outputs
+
+services:
+  motion:
+    <<: *motion-runtime
+    image: motion:0.1.0
+    build:
+      <<: *motion-build
+      target: runtime
+
+  motion-carla:
+    <<: *motion-runtime
+    image: motion-carla:0.1.0
+    platform: linux/amd64
+    profiles: [carla-client]
+    build:
+      <<: *motion-build
+      target: runtime-carla
+
+  motion-test:
+    image: motion-test:0.1.0
+    profiles: [test]
+    build:
+      <<: *motion-build
+      target: test
+    init: true
+    network_mode: none

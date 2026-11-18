@@ -51,9 +51,11 @@ temp/
 *.swp
 *~
 
-# Application runtime state and generated output
-var/
-outputs/
+# Application runtime state and generated output.
+var/*
+!var/.gitkeep
+outputs/*
+!outputs/.gitkeep
 
 # Generated data. Curated reference inputs remain versionable.
 data/*

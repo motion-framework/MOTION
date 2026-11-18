@@ -2,9 +2,10 @@
 
 ## CARLA
 
-CARLA and its Python API are external software and are not distributed as a PyPI
-dependency of MOTION. Their use and redistribution remain subject to
-the licenses and notices published by the CARLA project and its dependencies.
+CARLA and its Python API are external software. MOTION's optional `carla` extra
+installs the official client package, while the simulator remains a separate
+runtime. Their use and redistribution remain subject to the licenses and
+notices published by the CARLA project and its dependencies.
 
 ## OpenStreetMap data
 

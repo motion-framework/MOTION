@@ -38,7 +38,7 @@ class ActiveMapState:
 
     def to_profile(self, project_paths: ProjectPaths) -> MapProfile:
         def resolved(path_text: str) -> Path:
-            path = Path(path_text)
+            path = Path(path_text.replace("\\", "/"))
             candidate = (path if path.is_absolute() else project_paths.root / path).resolve()
             try:
                 candidate.relative_to(project_paths.root.resolve())
