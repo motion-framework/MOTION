@@ -25,8 +25,8 @@ UC-03's `simulate` step additionally produces:
   `viz`/matplotlib extra) showing each real corridor segment colored by
   congestion. **"Before"** is the real HERE `jam_factor` for that segment.
   **"After"** is MOTION's own population-allocation policy
-  (`domain.population.derive_population_targets` -- the same formula UC-01's
-  mirroring loop itself uses to populate CARLA) evaluated against the
+  (`domain.population.segment_target_vehicle_count` -- the per-segment half of
+  what UC-01's mirroring loop uses to populate CARLA) evaluated against the
   modified map. **This is a policy prediction, not a per-vehicle CARLA
   measurement.** MOTION's domain model tracks a bounding box and a speed
   limit, not lane counts or road topology, so for most of UC-03's
@@ -36,7 +36,10 @@ UC-03's `simulate` step additionally produces:
   TrafficManager's own pathfinding on your edited OpenDRIVE map that MOTION's
   analytical KPIs do not, and cannot, capture without per-vehicle telemetry.
   This is stated plainly so the heatmap is never mistaken for more than it
-  is.
+  is. Both panels share one scale: "after" converts the allocated vehicles
+  back to a jam factor with the same density formula the allocation uses, so
+  an unchanged allocation reproduces the "before" colour exactly instead of
+  implying relief the scenario did not cause.
 - A corridor-level KPI delta (average travel time, density) and an area CO2
   estimate -- computed exactly like UC-02's, from the same measured
   post-simulation `TrafficSimulator.average_speed_kmh()` /
@@ -96,18 +99,19 @@ motion infra-event simulate <scenario-id> --ticks 3 \
 
 `--heatmap-output` is optional; it defaults to
 `outputs/scenarios/<scenario-id>_heatmap.png` (git-ignored, like every other
-generated output under `outputs/`). `--offline`, `--grams-co2-per-km` and
-`--carla-exe` behave exactly as in UC-02.
+generated output under `outputs/`). `--ticks`, `--settle-seconds` (default 20),
+`--offline`, `--grams-co2-per-km` and `--carla-exe` behave exactly as in
+UC-02.
 
 ```
 ============================================================
 MOTION UC-03 | SCENARIO 20260817-143012-d4e5f6 REPORT
 Ticks simulated: 3
 ------------------------------------------------------------
-Corridor travel time : 42.1s -> 51.7s (+9.6s)
-Corridor density     : 18.40 -> 14.10 veh/km (-4.30)
-Area CO2 estimate    : 5820g -> 4460g (-1359g)
-Congestion heatmap   : 4 segment(s), image at outputs/scenarios/20260817-143012-d4e5f6_heatmap.png
+Corridor travel time : 4029.8s -> 9696.7s (+5666.8s)
+Corridor density     : 3.58 -> 2.85 veh/km (-0.74)
+Area CO2 estimate    : 203666g -> 161889g (-41778g)
+Congestion heatmap   : 49 segment(s), image at outputs/scenarios/20260817-143012-d4e5f6_heatmap.png
 ============================================================
 ```
 
@@ -117,11 +121,14 @@ Congestion heatmap   : 4 segment(s), image at outputs/scenarios/20260817-143012-
 - **`simulate` fails with a matplotlib/heatmap-rendering error**: install the
   `viz` extra: `pip install --editable ".[viz]"`. Without it, `stage` and
   `apply` still work; only heatmap rendering in `simulate` needs matplotlib.
-- **The heatmap looks almost identical before/after**: expected for most
-  modification kinds, for the reason explained above -- check the live CARLA
-  run itself (or the measured corridor travel-time/density delta, which does
+- **The heatmap looks identical before/after**: expected for most
+  modification kinds, for the reason explained above -- MOTION's allocation
+  depends on the jam factor and the segment's in-map length, neither of which
+  a parking, ZTL or junction-type edit changes. Check the live CARLA run
+  itself (or the measured corridor travel-time/density delta, which does
   reflect what the simulator actually observed) rather than the heatmap
-  alone.
+  alone. A segment that *does* change colour left the modified map's coverage
+  or had its in-map length change.
 
 ## Reused MOTION components (not reimplemented here)
 

@@ -21,8 +21,8 @@ class InfrastructureReportPrinter:
         write(f"Ticks simulated: {result.ticks_run}\n")
         write("-" * 60 + "\n")
         write(
-            f"Corridor travel time : {result.baseline.average_travel_time_seconds:.1f}s -> "
-            f"{result.scenario.average_travel_time_seconds:.1f}s "
+            f"Corridor travel time : {result.baseline.corridor_travel_time_seconds:.1f}s -> "
+            f"{result.scenario.corridor_travel_time_seconds:.1f}s "
             f"({result.delta.travel_time_seconds:+.1f}s)\n"
         )
         write(

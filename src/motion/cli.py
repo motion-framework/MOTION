@@ -242,6 +242,17 @@ def _add_scenario_stage_arguments(parser: argparse.ArgumentParser) -> None:
 def _add_scenario_simulate_arguments(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("scenario_id")
     parser.add_argument("--ticks", type=int, default=1)
+    parser.add_argument(
+        "--settle-seconds",
+        type=float,
+        default=20.0,
+        dest="settle_seconds",
+        help=(
+            "Let the simulation run this long after the last tick before measuring speed, "
+            "so the figure is cruising traffic rather than vehicles still accelerating "
+            "away from their spawn points. 0 measures immediately."
+        ),
+    )
     parser.add_argument("--offline", action="store_true")
     parser.add_argument("--carla-exe", type=Path)
     parser.add_argument("--grams-co2-per-km", type=float, dest="grams_co2_per_km")
@@ -755,6 +766,7 @@ def _handle_scenario_simulate(args: argparse.Namespace, settings: AppSettings) -
         args.scenario_id,
         offline=args.offline,
         ticks=args.ticks,
+        settle_seconds=args.settle_seconds,
         grams_per_vehicle_km=_resolved_grams_co2_per_km(args.grams_co2_per_km),
     )
     ScenarioDeltaReporter().report(report)
@@ -802,6 +814,7 @@ def _handle_infra_event_simulate(args: argparse.Namespace, settings: AppSettings
         args.scenario_id,
         offline=args.offline,
         ticks=args.ticks,
+        settle_seconds=args.settle_seconds,
         heatmap_output=args.heatmap_output,
         grams_per_vehicle_km=_resolved_grams_co2_per_km(args.grams_co2_per_km),
     )

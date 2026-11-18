@@ -157,7 +157,7 @@ Requests and pyproj:
 
 ```bash
 python3.12 -m venv .venv
-. .venv/bin/activate
+. .venv/bin/activate            # Windows: .venv\Scripts\activate
 python -m pip install --upgrade pip
 python -m pip install --editable .
 ```
@@ -210,87 +210,41 @@ the active bbox, map paths, device registry and selection filters.  A read-only
 compatibility loader accepts former `MAP_*` environment variables but never
 rewrites `.env`.
 
-## Quick start
+## Running the use cases
 
-Inspect implementation status and the installed command surface without CARLA
-or credentials:
+Each implemented use case owns its own end-to-end walkthrough: the exact
+commands, what every step writes to disk, the options that change behaviour and
+its own troubleshooting. This README deliberately does not duplicate them --
+follow the use case's own document:
+
+| Use case | Walkthrough |
+|---|---|
+| UC-01 Real-Time Traffic Mirroring | [`uc01_real_time_traffic_mirroring/README.md`](src/motion/application/use_cases/uc01_real_time_traffic_mirroring/README.md) |
+| UC-02 What-If Scenario Editor | [`uc02_what_if_scenario/README.md`](src/motion/application/use_cases/uc02_what_if_scenario/README.md) |
+| UC-03 Infrastructure Event Simulation | [`uc03_infrastructure_event_simulation/README.md`](src/motion/application/use_cases/uc03_infrastructure_event_simulation/README.md) |
+| KPI and heatmap methodology shared by UC-02/UC-03 | [`docs/scenario-kpis.md`](docs/scenario-kpis.md) |
+| Evidence, dependencies and gaps per UC | [`docs/use-cases.md`](docs/use-cases.md) |
+
+UC-02 and UC-03 are not fully automatic: between `stage` and `apply` a human
+edits the staged `.osm` file in an external editor such as
+[JOSM](https://josm.openstreetmap.org/). MOTION does not edit map geometry
+itself, and `apply` refuses to continue until the file's checksum changes.
+
+### Verifying the installation
+
+These two commands need neither credentials nor CARLA, and confirm the package
+and its command surface are installed correctly:
 
 ```bash
 motion uc-status
 motion --help
-motion map --help
 ```
 
-Provision a named map directly from a centre/radius. This command needs network
-access to Overpass and a compatible CARLA Python API for Osm2Odr conversion:
-
-```bash
-motion map provision \
-  --name salerno \
-  --lat 40.6772 --lon 14.7604 --radius 400
-```
-
-Road selection additionally requires `HERE_API_KEY`:
-
-```bash
-motion map mirror-road \
-  --lat 40.6772 --lon 14.7604 --radius 400 --name salerno --geo
-```
-
-The full UC-01 flow also requires a reachable CARLA simulator:
-
-```bash
-motion mirror \
-  --lat 40.6772 --lon 14.7604 --radius 400 --name salerno --geo
-```
-
-Reuse the registered active map without another OSM/OpenDRIVE build:
-
-```bash
-motion mirror --skip-provision
-```
-
-Run one complete UC-01 integration tick without HERE or Overpass, using the
-registered active map, synthetic field-device readings and synthetic traffic
-payloads that match the HERE v7 subset consumed by this project:
-
-```bash
-motion mirror --offline --once
-```
-
-See [the UC-01 README](src/motion/application/use_cases/uc01_real_time_traffic_mirroring/README.md)
-for the full walkthrough, segment filtering rules, the per-tick dashboard and
-troubleshooting.
-
-Offline mode still requires a reachable CARLA simulator. It does not construct
-an HTTP client, provision a map or accept road-selection coordinates. Synthetic
-flow payloads use the HERE `results`/`location`/`currentFlow` structure and pass
-through the production `HereTrafficProvider`, `TrafficParser` and
-`IncidentParser`; their values are artificial and are not evidence of live
-traffic conditions.
-
-Use `--once` for one refresh tick and `--check-calibration` or
-`--verify-calibration` for opt-in CARLA map checks. Live commands fail if their
-configured HERE, Overpass or CARLA boundary is unavailable.
-
-Stage a UC-02 what-if scenario (needs `HERE_API_KEY`); `apply` needs the CARLA
-Python API, `simulate` needs a reachable CARLA simulator. See
-[the UC-02 README](src/motion/application/use_cases/uc02_what_if_scenario/README.md)
-for the full walkthrough, including what each step writes to disk:
-
-```bash
-motion scenario stage \
-  --lat 40.6772 --lon 14.7604 --radius 400 --name salerno --geo \
-  --modification-kind LANE_CLOSURE --notes "Close the northbound lane"
-# ... edit the printed OSM file externally (e.g. JOSM), then:
-motion scenario apply <scenario-id>
-motion scenario simulate <scenario-id> --ticks 3
-```
-
-UC-03 follows the identical shape under `motion infra-event
-stage|apply|simulate`, additionally rendering a congestion heatmap (needs the
-`viz` extra); see
-[the UC-03 README](src/motion/application/use_cases/uc03_infrastructure_event_simulation/README.md).
+Every other command reaches an external boundary. Commands that select a road or
+read live traffic need `HERE_API_KEY`; commands that build or convert a map also
+need network access to Overpass and the CARLA Python API; commands that simulate
+need a reachable CARLA simulator as well. Each fails with its own message when
+the boundary it needs is unavailable.
 
 ## CLI reference
 

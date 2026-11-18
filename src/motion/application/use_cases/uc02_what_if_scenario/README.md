@@ -131,6 +131,16 @@ Variant OpenDRIVE: data/maps/salerno__scenario-20260817-142530-a1b2c3/salerno__s
 motion scenario simulate 20260817-142530-a1b2c3 --ticks 3
 ```
 
+`--ticks` sets how many mirroring ticks run on the modified map; they run
+back-to-back, so more ticks means a longer-settled simulation, not a longer
+wall-clock interval between them.
+
+`--settle-seconds` (default 20) lets the simulation keep running for that long
+after the last tick, before the scenario's speed is measured. Without it the
+measurement catches vehicles still accelerating away from their spawn points
+and reports that transient as the corridor's steady-state speed; pass `0` to
+measure immediately.
+
 Add `--offline` to drive it from the synthetic HERE-compatible provider
 instead of live HERE (useful for testing the pipeline without credentials --
 see `motion mirror --offline` for the same idea on UC-01). Add
@@ -138,16 +148,24 @@ see `motion mirror --offline` for the same idea on UC-01). Add
 Add `--carla-exe` if CARLA needs to be launched rather than already running.
 
 ```
-============================================================
+======================================================================
 MOTION UC-02 | SCENARIO 20260817-142530-a1b2c3 DELTA REPORT
 Ticks simulated: 3
-------------------------------------------------------------
-Metric                          Baseline    Scenario   Delta
-Travel time (s)                     42.1        51.7    +9.6
-Density (veh/km)                    18.40       14.10   -4.30
-CO2 (g)                            5820.0      4460.5 -1359.5
-============================================================
+----------------------------------------------------------------------
+Metric                          Baseline       Scenario          Delta
+Corridor travel time (s)          4282.3         9196.5        +4914.2
+Density (veh/km)                    3.57           3.30          -0.27
+CO2 (g)                           220775         204422         -16353
+======================================================================
 ```
+
+Both travel times measure the same thing: traversing the whole corridor, the
+baseline at the speeds HERE observed and the scenario at the speed the
+simulator measured. Density and CO2 derive from a vehicle count that is
+bounded on both sides by the simulator's own population ceiling, so they move
+only when the modified map actually costs the simulation vehicles -- see
+[docs/scenario-kpis.md](../../../../../docs/scenario-kpis.md) for why that
+bound is applied to the baseline too.
 
 The scenario record's `status` becomes `SIMULATED` and its `kpi_report` field
 holds this same data as JSON, at `var/runtime/scenarios/<id>.json`.

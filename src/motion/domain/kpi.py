@@ -13,7 +13,8 @@ from __future__ import annotations
 from collections.abc import Sequence
 from dataclasses import dataclass
 
-from .population import segment_target_vehicle_count
+from .mirroring import MAXIMUM_VEHICLE_COUNT
+from .population import derive_population_targets
 from .traffic import TrafficSegment
 
 DEFAULT_GRAMS_CO2_PER_VEHICLE_KM = 120.0
@@ -65,7 +66,7 @@ def co2_grams(
 class KpiSnapshot:
     """One side (baseline or scenario) of a before/after KPI comparison."""
 
-    average_travel_time_seconds: float
+    corridor_travel_time_seconds: float
     average_density_vehicles_per_km: float
     total_co2_grams: float
     vehicle_count: int
@@ -84,7 +85,7 @@ class KpiDelta:
     def between(cls, baseline: KpiSnapshot, scenario: KpiSnapshot) -> KpiDelta:
         return cls(
             travel_time_seconds=(
-                scenario.average_travel_time_seconds - baseline.average_travel_time_seconds
+                scenario.corridor_travel_time_seconds - baseline.corridor_travel_time_seconds
             ),
             density_vehicles_per_km=(
                 scenario.average_density_vehicles_per_km - baseline.average_density_vehicles_per_km
@@ -97,29 +98,42 @@ def snapshot_from_segments(
     segments: Sequence[TrafficSegment],
     *,
     grams_per_vehicle_km: float = DEFAULT_GRAMS_CO2_PER_VEHICLE_KM,
+    max_total_vehicles: int = MAXIMUM_VEHICLE_COUNT,
 ) -> KpiSnapshot:
     """The baseline snapshot, computed directly from real HERE segments.
 
-    Vehicle counts reuse ``domain.population.segment_target_vehicle_count``
-    (the same jam-factor-to-density formula UC-01 uses to populate CARLA), so
-    the baseline vehicle count is exactly what UC-01 would mirror for this
-    traffic. ``average_travel_time_seconds`` is the mean of each segment's own
-    crossing time (see ``travel_time_seconds``), not weighted by length.
+    Both sides of the comparison must describe the same quantity over the same
+    corridor, so:
+
+    - ``corridor_travel_time_seconds`` is the time to traverse the **whole**
+      corridor -- the sum of each segment's own crossing time (see
+      ``travel_time_seconds``) -- matching ``snapshot_from_measured``, which
+      crosses the same total ``distance_km`` at the measured speed. A mean of
+      per-segment times would describe one average segment, not the corridor,
+      and could not be differenced against the measured value.
+    - Vehicle counts reuse ``domain.population.derive_population_targets``
+      with the same ``max_total_vehicles`` budget UC-01's mirroring loop
+      applies, so the baseline count is what UC-01 would actually mirror for
+      this traffic. Summing uncapped per-segment targets instead would make
+      the baseline exceed the simulator's own population ceiling, and every
+      density/CO2 delta would then measure that ceiling rather than the
+      scenario.
     """
 
     if not segments:
         return KpiSnapshot(0.0, 0.0, 0.0, 0, 0.0)
 
     total_length_m = sum(segment.length_m for segment in segments)
-    total_vehicle_count = sum(segment_target_vehicle_count(segment) for segment in segments)
-    segment_times = [
+    total_vehicle_count = sum(
+        count for _segment, count in derive_population_targets(list(segments), max_total_vehicles)
+    )
+    corridor_travel_time = sum(
         travel_time_seconds(segment.length_m, segment.speed_kmh) for segment in segments
-    ]
-    average_travel_time = sum(segment_times) / len(segment_times)
+    )
     distance_km = total_length_m / 1_000.0
 
     return KpiSnapshot(
-        average_travel_time_seconds=average_travel_time,
+        corridor_travel_time_seconds=corridor_travel_time,
         average_density_vehicles_per_km=density_vehicles_per_km(
             total_vehicle_count, total_length_m
         ),
@@ -150,7 +164,7 @@ def snapshot_from_measured(
 
     distance_m = distance_km * 1_000.0
     return KpiSnapshot(
-        average_travel_time_seconds=travel_time_seconds(distance_m, average_speed_kmh),
+        corridor_travel_time_seconds=travel_time_seconds(distance_m, average_speed_kmh),
         average_density_vehicles_per_km=density_vehicles_per_km(vehicle_count, distance_m),
         total_co2_grams=co2_grams(vehicle_count, distance_km, grams_per_vehicle_km),
         vehicle_count=vehicle_count,

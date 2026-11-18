@@ -9,6 +9,7 @@ See the package README for the exact CLI flow.
 from __future__ import annotations
 
 import logging
+import time
 from collections.abc import Callable, Sequence
 from dataclasses import asdict, dataclass, replace
 from pathlib import Path
@@ -44,8 +45,8 @@ from motion.domain.kpi import (
     snapshot_from_measured,
     snapshot_from_segments,
 )
-from motion.domain.mirroring import MAXIMUM_VEHICLE_COUNT, SpeedMirrorPolicy
-from motion.domain.population import derive_population_targets
+from motion.domain.mirroring import SpeedMirrorPolicy
+from motion.domain.population import segment_target_vehicle_count
 from motion.domain.scenarios import ScenarioModification, ScenarioStatus, validate_modification_kind
 from motion.domain.traffic import TrafficSegment
 
@@ -111,7 +112,7 @@ class InfrastructureEventService:
             modification=modification,
             baseline_state=proposal.provisioning.state,
             variant_map_name=self._settings.paths.scenario_map_name(profile.name, chosen_id),
-            editable_osm_path=str(editable_path.relative_to(self._settings.paths.root)),
+            editable_osm_path=editable_path.relative_to(self._settings.paths.root).as_posix(),
             editable_osm_sha256=digest,
         )
         self._repository.save(record)
@@ -136,7 +137,9 @@ class InfrastructureEventService:
         updated = replace(
             record,
             status=ScenarioStatus.READY,
-            variant_xodr_path=str(variant_profile.xodr_path.relative_to(self._settings.paths.root)),
+            variant_xodr_path=variant_profile.xodr_path.relative_to(
+                self._settings.paths.root
+            ).as_posix(),
         )
         self._repository.save(updated)
         return updated
@@ -147,6 +150,7 @@ class InfrastructureEventService:
         *,
         offline: bool,
         ticks: int = 1,
+        settle_seconds: float = 0.0,
         grams_per_vehicle_km: float = DEFAULT_GRAMS_CO2_PER_VEHICLE_KM,
         heatmap_output: Path | None = None,
         simulator_factory: Callable[[MapProfile], TrafficSimulator] | None = None,
@@ -154,6 +158,8 @@ class InfrastructureEventService:
     ) -> InfrastructureSimulationReport:
         if ticks <= 0:
             raise ValueError("ticks must be positive.")
+        if settle_seconds < 0.0:
+            raise ValueError("settle_seconds cannot be negative.")
         record = self._repository.load(scenario_id)
         if record.status not in (ScenarioStatus.READY, ScenarioStatus.SIMULATED):
             raise ScenarioStateError(
@@ -188,6 +194,8 @@ class InfrastructureEventService:
             mirror_service.prepare()
             for _tick in range(ticks):
                 mirror_service.run_tick()
+            if settle_seconds > 0.0:
+                mirror_service.watch_until(time.monotonic() + settle_seconds)
             vehicle_count = simulator.owned_vehicle_count()
             average_speed_kmh = simulator.average_speed_kmh()
         finally:
@@ -231,17 +239,23 @@ def _congestion_heatmap_for(
 ) -> CongestionHeatmap:
     """The same per-segment population-allocation math UC-01's own tick uses.
 
-    Mirrors ``TrafficMirrorService._synchronize_by_segment`` exactly (clip to
-    map coverage, resize to the in-map length, then
-    ``derive_population_targets``) so the heatmap's "after" figure is
-    consistent with what UC-01's own mirroring loop would allocate on this
-    map -- a policy prediction, not a per-vehicle CARLA measurement.
+    Mirrors ``TrafficMirrorService._synchronize_by_segment``'s geometry step
+    (clip to map coverage, resize to the in-map length) and then takes each
+    segment's **own** ``segment_target_vehicle_count`` -- a policy prediction,
+    not a per-vehicle CARLA measurement.
+
+    The global ``derive_population_targets`` budget UC-01 applies on top is
+    deliberately *not* applied here: it redistributes a fixed vehicle ceiling
+    across however many segments the corridor happens to have, so including it
+    would make every segment look less congested purely because the corridor
+    is wide, and would not be comparable with the absolute HERE jam factor on
+    the heatmap's "before" side.
     """
 
     coverages = coverage.coverages_of(coverage.segments_touching_map(segments))
     population_coverages = [coverage.resized_for_population(item) for item in coverages]
     resized_segments = [item.segment for item in population_coverages]
-    allocations = derive_population_targets(resized_segments, MAXIMUM_VEHICLE_COUNT)
+    allocations = [(segment, segment_target_vehicle_count(segment)) for segment in resized_segments]
     return build_congestion_heatmap(resized_segments, allocations)
 
 

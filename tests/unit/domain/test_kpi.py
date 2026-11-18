@@ -12,6 +12,7 @@ from motion.domain.kpi import (
     snapshot_from_segments,
     travel_time_seconds,
 )
+from motion.domain.population import segment_target_vehicle_count
 from motion.domain.traffic import TrafficSegment
 
 
@@ -64,20 +65,42 @@ def test_snapshot_from_segments_matches_expected_values() -> None:
     # speed 36 km/h == 10 m/s -> 1000m in 100s.
     snapshot = snapshot_from_segments([_segment()])
 
-    assert snapshot.average_travel_time_seconds == pytest.approx(100.0)
+    assert snapshot.corridor_travel_time_seconds == pytest.approx(100.0)
     assert snapshot.vehicle_count == 40
     assert snapshot.distance_km == pytest.approx(1.0)
     assert snapshot.average_density_vehicles_per_km == pytest.approx(40.0)
     assert snapshot.total_co2_grams == pytest.approx(40 * 1.0 * DEFAULT_GRAMS_CO2_PER_VEHICLE_KM)
 
 
-def test_snapshot_from_segments_averages_travel_time_across_segments() -> None:
+def test_snapshot_from_segments_sums_travel_time_across_the_corridor() -> None:
+    """Traversing the corridor crosses every segment, so the times add up.
+
+    A mean would describe one average segment and could not be differenced
+    against ``snapshot_from_measured``, which crosses the same total distance.
+    """
+
     fast = _segment(length_m=1000.0, speed_kmh=36.0)  # 100s
     slow = _segment(length_m=1000.0, speed_kmh=18.0)  # 200s
     snapshot = snapshot_from_segments([fast, slow])
 
-    assert snapshot.average_travel_time_seconds == pytest.approx((100.0 + 200.0) / 2)
+    assert snapshot.corridor_travel_time_seconds == pytest.approx(300.0)
     assert snapshot.distance_km == pytest.approx(2.0)
+
+
+def test_snapshot_from_segments_applies_the_global_vehicle_budget() -> None:
+    """The baseline count is what UC-01 would really mirror, not an uncapped sum.
+
+    Ten fully-jammed 1 km segments each want the 40-vehicle per-segment cap;
+    the simulator will only ever hold ``max_total_vehicles`` of them, and a
+    baseline above that ceiling would make every density/CO2 delta measure the
+    ceiling instead of the scenario.
+    """
+
+    segments = [_segment(jam_factor=10.0) for _ in range(10)]
+
+    assert sum(segment_target_vehicle_count(s) for s in segments) == 400
+    assert snapshot_from_segments(segments).vehicle_count == 80
+    assert snapshot_from_segments(segments, max_total_vehicles=50).vehicle_count == 50
 
 
 def test_snapshot_from_measured_with_no_observed_vehicles_is_all_zero() -> None:
@@ -92,7 +115,7 @@ def test_snapshot_from_measured_with_no_observed_vehicles_is_all_zero() -> None:
 def test_snapshot_from_measured_computes_from_average_speed() -> None:
     snapshot = snapshot_from_measured(vehicle_count=20, average_speed_kmh=36.0, distance_km=2.0)
 
-    assert snapshot.average_travel_time_seconds == pytest.approx(200.0)
+    assert snapshot.corridor_travel_time_seconds == pytest.approx(200.0)
     assert snapshot.average_density_vehicles_per_km == pytest.approx(10.0)
     assert snapshot.total_co2_grams == pytest.approx(20 * 2.0 * DEFAULT_GRAMS_CO2_PER_VEHICLE_KM)
     assert snapshot.vehicle_count == 20

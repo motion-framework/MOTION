@@ -19,12 +19,22 @@ or, with `--offline`, the same synthetic HERE-compatible provider `motion
 mirror --offline` uses). No simulation is required for the baseline: this
 matches UC-02's own precondition, "UC-01 active / real baseline available."
 
-- Vehicle count reuses `domain.population.segment_target_vehicle_count` --
+- Vehicle count reuses `domain.population.derive_population_targets` --
   the exact jam-factor-to-density formula UC-01 itself uses to populate
-  CARLA -- so the baseline count is exactly what UC-01 would mirror for this
-  traffic.
-- Travel time is the mean of each segment's own crossing time
-  (`length_m / speed_kmh`), not weighted by length.
+  CARLA, **including its global `MAXIMUM_VEHICLE_COUNT` budget** -- so the
+  baseline count is what UC-01 would actually mirror for this traffic. The
+  budget matters: summing uncapped per-segment targets would put the baseline
+  above the population ceiling the scenario side is physically bound by, and
+  every density and CO2 delta would then be measuring that ceiling instead of
+  the scenario. Note the ceiling binds both sides on a busy corridor, so
+  those two KPIs move only when the modified map actually costs the simulator
+  vehicles (spawn failures, culled actors), not merely because traffic is
+  heavy.
+- Travel time is the time to traverse the **whole corridor**: the sum of each
+  segment's own crossing time (`length_m / speed_kmh`). It has to be, because
+  the scenario side crosses that same total `distance_km` at the measured
+  speed -- a mean of per-segment times would describe one average segment and
+  could not be differenced against it.
 - Density is total vehicle count over total corridor length.
 - CO2 is `vehicle_count * distance_km * grams_per_vehicle_km` (see below).
 
@@ -88,18 +98,29 @@ segment:
 
 - `before_congestion_index`: the real HERE `jam_factor` (already 0-10).
 - `after_congestion_index`: MOTION's own population-allocation policy
-  (`domain.population.derive_population_targets` -- the same allocation
-  UC-01's mirroring loop itself performs) applied to the same frozen segment
-  against the modified map's coverage, normalized to the same 0-10 scale.
+  (`domain.population.segment_target_vehicle_count`, the per-segment half of
+  what UC-01's mirroring loop performs) applied to the same frozen segment
+  against the modified map's coverage, converted back onto HERE's 0-10 scale
+  by inverting that same formula (`count / length_km / JAM_DENSITY_VEH_PER_KM`).
+  UC-01's *global* vehicle budget is deliberately excluded here: it shares one
+  fixed ceiling among however many segments the corridor has, so including it
+  would make every segment look calmer purely because the corridor is wide,
+  and would not be comparable with the absolute jam factor on the "before"
+  side. The one place the two scales still part company is a segment whose
+  demand exceeds the 40-vehicle per-segment cap: there the prediction
+  understates congestion rather than inventing capacity CARLA cannot simulate.
 
 This is explicitly a **policy prediction**, not a per-vehicle CARLA
 measurement -- unlike the aggregate corridor KPIs above, which are measured.
 Because the modified map's bounding box and device registry are inherited
 unchanged from the baseline, and MOTION's coverage/allocation math depends
 only on bbox and jam factor (not on lanes, parking or junction type), the
-heatmap's "after" state will look very similar to "before" for most
-modification kinds -- an accurate reflection of what this coarse domain model
-can predict analytically, not a defect. Anyone needing the emergent
+heatmap's "after" state is *identical* to "before" for most modification
+kinds -- the conversion above inverts the allocation exactly below the
+per-segment cap. That is an accurate reflection of what this coarse domain
+model can predict analytically, not a defect; a visible difference means a
+segment genuinely left the modified map's coverage or had its in-map length
+change. Anyone needing the emergent
 CARLA-observed effect should look at the measured corridor KPIs, or watch the
 live CARLA run itself.
 

@@ -8,6 +8,7 @@ instead of driving CARLA ScenarioRunner -- see the package README for why.
 from __future__ import annotations
 
 import logging
+import time
 from collections.abc import Callable
 from dataclasses import asdict, dataclass, replace
 from typing import TYPE_CHECKING, Any
@@ -109,7 +110,7 @@ class WhatIfScenarioService:
             modification=modification,
             baseline_state=proposal.provisioning.state,
             variant_map_name=self._settings.paths.scenario_map_name(profile.name, chosen_id),
-            editable_osm_path=str(editable_path.relative_to(self._settings.paths.root)),
+            editable_osm_path=editable_path.relative_to(self._settings.paths.root).as_posix(),
             editable_osm_sha256=digest,
         )
         self._repository.save(record)
@@ -134,7 +135,9 @@ class WhatIfScenarioService:
         updated = replace(
             record,
             status=ScenarioStatus.READY,
-            variant_xodr_path=str(variant_profile.xodr_path.relative_to(self._settings.paths.root)),
+            variant_xodr_path=variant_profile.xodr_path.relative_to(
+                self._settings.paths.root
+            ).as_posix(),
         )
         self._repository.save(updated)
         return updated
@@ -145,11 +148,14 @@ class WhatIfScenarioService:
         *,
         offline: bool,
         ticks: int = 1,
+        settle_seconds: float = 0.0,
         grams_per_vehicle_km: float = DEFAULT_GRAMS_CO2_PER_VEHICLE_KM,
         simulator_factory: Callable[[MapProfile], TrafficSimulator] | None = None,
     ) -> ScenarioSimulationReport:
         if ticks <= 0:
             raise ValueError("ticks must be positive.")
+        if settle_seconds < 0.0:
+            raise ValueError("settle_seconds cannot be negative.")
         record = self._repository.load(scenario_id)
         if record.status not in (ScenarioStatus.READY, ScenarioStatus.SIMULATED):
             raise ScenarioStateError(
@@ -181,6 +187,8 @@ class WhatIfScenarioService:
             mirror_service.prepare()
             for _tick in range(ticks):
                 mirror_service.run_tick()
+            if settle_seconds > 0.0:
+                mirror_service.watch_until(time.monotonic() + settle_seconds)
             vehicle_count = simulator.owned_vehicle_count()
             average_speed_kmh = simulator.average_speed_kmh()
         finally:
