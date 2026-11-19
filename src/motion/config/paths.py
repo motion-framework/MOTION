@@ -13,6 +13,10 @@ class UnsafeMapNameError(ValueError):
     pass
 
 
+class UnsafeScenarioIdError(ValueError):
+    pass
+
+
 def validate_map_name(name: str) -> str:
     if name in {".", ".."} or not SAFE_MAP_NAME.fullmatch(name):
         raise UnsafeMapNameError(
@@ -20,6 +24,23 @@ def validate_map_name(name: str) -> str:
             "only letters, digits, '.', '_' or '-'."
         )
     return name
+
+
+def validate_scenario_id(scenario_id: str) -> str:
+    """Apply the same safe-filename constraint used for map names.
+
+    Scenario ids are used both as a filename component
+    (``var/runtime/scenarios/<id>.json``) and, embedded in a map name
+    (``<baseline>__scenario-<id>``), so they must satisfy the stricter of the
+    two constraints, which is exactly ``SAFE_MAP_NAME``.
+    """
+
+    if scenario_id in {".", ".."} or not SAFE_MAP_NAME.fullmatch(scenario_id):
+        raise UnsafeScenarioIdError(
+            "Scenario ids must start with an alphanumeric character and contain "
+            "only letters, digits, '.', '_' or '-'."
+        )
+    return scenario_id
 
 
 @dataclass(frozen=True, slots=True)
@@ -63,6 +84,22 @@ class ProjectPaths:
     @property
     def outputs(self) -> Path:
         return self.root / "outputs"
+
+    @property
+    def scenarios(self) -> Path:
+        return self.runtime / "scenarios"
+
+    @property
+    def scenario_outputs(self) -> Path:
+        return self.outputs / "scenarios"
+
+    def scenario_state_path(self, scenario_id: str) -> Path:
+        return self.scenarios / f"{validate_scenario_id(scenario_id)}.json"
+
+    def scenario_map_name(self, baseline_name: str, scenario_id: str) -> str:
+        return validate_map_name(
+            f"{validate_map_name(baseline_name)}__scenario-{validate_scenario_id(scenario_id)}"
+        )
 
     def map_directory(self, name: str) -> Path:
         return self.maps / validate_map_name(name)

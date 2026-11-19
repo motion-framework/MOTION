@@ -53,9 +53,13 @@ class UseCaseCatalogTest(unittest.TestCase):
                 self.assertIs(module.USE_CASE, descriptors_by_id[use_case_id])
 
     def test_statuses_do_not_advertise_research_directions_as_implemented(self) -> None:
-        self.assertEqual(USE_CASE_CATALOG[0].status, UseCaseStatus.IMPLEMENTED)
+        implemented, research_direction = USE_CASE_CATALOG[:3], USE_CASE_CATALOG[3:]
 
-        for descriptor in USE_CASE_CATALOG[1:]:
+        for descriptor in implemented:
+            with self.subTest(use_case_id=descriptor.use_case_id):
+                self.assertEqual(descriptor.status, UseCaseStatus.IMPLEMENTED)
+
+        for descriptor in research_direction:
             with self.subTest(use_case_id=descriptor.use_case_id):
                 self.assertEqual(
                     descriptor.status,

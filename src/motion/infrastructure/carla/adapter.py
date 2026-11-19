@@ -21,6 +21,7 @@ from motion.ports.simulator import (
     SegmentCoverage,
 )
 
+from .kinematics import vehicle_speed_kmh
 from .lifecycle import CarlaLifecycle
 from .population import (
     CarlaPopulationManager,
@@ -162,6 +163,16 @@ class CarlaTrafficSimulator:
 
     def owned_vehicle_count(self) -> int:
         return len(self._registry.live())
+
+    def average_speed_kmh(self) -> float | None:
+        """Measured average speed of every owned, live vehicle right now.
+
+        ``None`` when no vehicle is owned, so callers never have to treat a
+        meaningless 0.0 as a real "vehicles are stopped" observation.
+        """
+
+        speeds = [vehicle_speed_kmh(vehicle) for vehicle in self._registry.live()]
+        return sum(speeds) / len(speeds) if speeds else None
 
     def synchronize_population(self, targets: Sequence[PopulationTarget]) -> int:
         return self._population.synchronize_population(targets)

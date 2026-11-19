@@ -11,9 +11,12 @@ development.
 ## Repository status
 
 This initial codebase comes from the re-engineering of a thesis prototype.
-**UC-01 is currently the only implemented end-to-end use case.** The
-packages for UC-02–UC-07 provide scope and traceability metadata, but they do not
-yet expose executable workflows.
+**UC-01, UC-02 and UC-03 are implemented end-to-end use cases.** UC-02 and
+UC-03 build on UC-01's own map-provisioning and CARLA-mirroring machinery
+through a shared propose/stage/apply/simulate pipeline; see
+[docs/use-cases.md](docs/use-cases.md) for the exact evidence and deliberate
+architecture substitutions. The packages for UC-04–UC-07 provide scope and
+traceability metadata, but they do not yet expose executable workflows.
 
 The project-wide Python package and installed command are both named `motion`,
 matching the MOTION project rather than the scope of a single use case. UC-01
@@ -26,8 +29,8 @@ command or project-root environment-variable alias is exposed.
 | UC | Goal | Status |
 |---|---|---|
 | UC-01 Real-Time Traffic Mirroring | Synchronise observed traffic with a CARLA traffic twin. | **IMPLEMENTED** |
-| UC-02 What-If Scenario Editor | Compare policy/infrastructure changes with a real baseline. | **NOT IMPLEMENTED / RESEARCH DIRECTION** |
-| UC-03 Infrastructure Event Simulation | Evaluate traffic/environmental effects of urban changes. | **NOT IMPLEMENTED / RESEARCH DIRECTION** |
+| UC-02 What-If Scenario Editor | Compare policy/infrastructure changes with a real baseline. | **IMPLEMENTED** |
+| UC-03 Infrastructure Event Simulation | Evaluate traffic/environmental effects of urban changes. | **IMPLEMENTED** |
 | UC-04 Multivariate Traffic Prediction | Forecast network traffic over 15-minute-to-24-hour horizons. | **NOT IMPLEMENTED / RESEARCH DIRECTION** |
 | UC-05 Environmental Impact Forecast | Forecast CO2/air-quality risk and intervention effects. | **NOT IMPLEMENTED / RESEARCH DIRECTION** |
 | UC-06 Luminosity Anomaly Detection | Detect measured-versus-expected luminosity anomalies. | **NOT IMPLEMENTED / RESEARCH DIRECTION** |
@@ -66,6 +69,34 @@ separate, versioned pipeline.
   inference tracking;
 - an installed CLI with offline tests, static analysis, packaging and CI.
 
+## Implemented modules: UC-02 / UC-03 — scenario and infrastructure-event simulation
+
+UC-02 (What-If Scenario Editor) and UC-03 (Infrastructure Event Simulation)
+share one `stage -> (external map edit) -> apply -> simulate` pipeline
+(`motion.application.scenario_workflow`): propose a real HERE-covered road and
+provision its baseline map exactly as UC-01 does, stage a copy of that map's
+`.osm` file for a human to edit externally (e.g. in
+[JOSM](https://josm.openstreetmap.org/) — MOTION does not edit map geometry
+itself), convert and repair the edited map into OpenDRIVE, then re-run UC-01's
+own `TrafficMirrorService`/`CarlaTrafficSimulator` against the modified map to
+produce a measured before/after KPI report. UC-03 additionally renders a
+before/after congestion heatmap (optional `viz` extra).
+
+- `motion scenario stage|apply|simulate` — UC-02: travel-time/density/CO2 KPI
+  delta versus the real baseline.
+- `motion infra-event stage|apply|simulate` — UC-03: the same measured
+  corridor KPIs plus a rendered congestion heatmap.
+
+Both packages reuse UC-01's simulator/CARLA machinery instead of driving
+CARLA's separate ScenarioRunner framework, and both compute KPIs from what the
+simulator actually measures after running on the modified map, not from an
+echo of commanded policy. See each package's own step-by-step README
+(`src/motion/application/use_cases/uc02_what_if_scenario/README.md`,
+`.../uc03_infrastructure_event_simulation/README.md`) for the full CLI
+walkthrough and generated file layout, and
+[docs/scenario-kpis.md](docs/scenario-kpis.md) for the KPI/heatmap methodology
+and its documented approximations.
+
 ## MOTION and OR3 context
 
 MOTION describes an integrated platform for monitoring and managing mobility,
@@ -83,9 +114,10 @@ does not imply that every related workflow is implemented.
 
 Domain modules perform no I/O and do not import CARLA, Requests, pandas or
 scikit-learn. External adapters implement the ports used by application
-services. UC-01 owns application orchestration; reusable HERE, OSM and CARLA
-logic remains outside the UC package. The CLI is the composition root and
-contains no traffic policy.
+services. UC-01, UC-02 and UC-03 own application orchestration; reusable HERE,
+OSM and CARLA logic remains outside the UC packages, and UC-02/UC-03 share one
+propose/stage/apply workflow implementation rather than duplicating it. The
+CLI is the composition root and contains no traffic policy.
 
 More detail, including data-flow diagrams and intentional compatibility rules,
 is in [docs/architecture.md](docs/architecture.md).  The original-system analysis
@@ -101,14 +133,15 @@ and migration record are in
 ├── constraints.txt                reproducible container/CI resolution
 ├── pyproject.toml                 package, tools and dependency contracts
 ├── src/motion/
-│   ├── application/              provisioning, selection and UC services
-│   ├── config/                   static settings, paths and runtime state
-│   ├── domain/                   pure traffic/geospatial/device policies
-│   ├── infrastructure/           HERE, OSM, map and CARLA adapters
+│   ├── application/              provisioning, selection, scenario workflow and UC services
+│   ├── config/                   static settings, paths, active-map and scenario runtime state
+│   ├── domain/                   pure traffic/geospatial/device/KPI/heatmap policies
+│   ├── infrastructure/           HERE, OSM, map, CARLA and report-rendering adapters
 │   ├── ports/                    external-boundary protocols
 │   ├── prediction/               behavioral dataset/model/inference contracts
 │   └── cli.py                    installed command and composition root
 ├── tests/                        characterization, unit and integration tests
+├── tests/support/                shared offline fakes reused across test modules
 ├── docs/                         architecture, UCs and regression evidence
 ├── data/reference/               curated source/reference data with provenance
 ├── artifacts/reference/          curated legacy model with provenance
@@ -127,7 +160,7 @@ Requests and pyproj:
 
 ```bash
 python3.12 -m venv .venv
-. .venv/bin/activate
+. .venv/bin/activate            # Windows: .venv\Scripts\activate
 python -m pip install --upgrade pip
 python -m pip install --editable .
 ```
@@ -138,14 +171,16 @@ to run:
 ```bash
 python -m pip install --editable ".[carla]"
 python -m pip install --editable ".[ml]"
-python -m pip install --editable ".[dev,ml]"
+python -m pip install --editable ".[viz]"
+python -m pip install --editable ".[dev,ml,viz]"
 ```
 
 `pyproject.toml` is the package dependency contract; the repository does not
 maintain a duplicate `requirements.txt`. In `pip install --editable ".[ml]"`,
 `--editable` links the checkout into the environment and `[ml]` selects the
-behavioral-analysis extra. For a non-editable installation use
-`python -m pip install ".[ml]"`.
+behavioral-analysis extra. `[viz]` (matplotlib) is required only to render
+UC-03's congestion-heatmap image; every other command works without it. For a
+non-editable installation use `python -m pip install ".[ml]"`.
 
 CARLA is not a core dependency. The optional `[carla]` extra pins the official
 Python client to 0.9.16, matching the external simulator version targeted by
@@ -231,64 +266,41 @@ in the checkout after a container is removed. See
 [docs/docker.md](docs/docker.md) for map provisioning, configuration, platform
 support and troubleshooting.
 
-## Quick start
+## Running the use cases
 
-Inspect implementation status and the installed command surface without CARLA
-or credentials:
+Each implemented use case owns its own end-to-end walkthrough: the exact
+commands, what every step writes to disk, the options that change behaviour and
+its own troubleshooting. This README deliberately does not duplicate them --
+follow the use case's own document:
+
+| Use case | Walkthrough |
+|---|---|
+| UC-01 Real-Time Traffic Mirroring | [`uc01_real_time_traffic_mirroring/README.md`](src/motion/application/use_cases/uc01_real_time_traffic_mirroring/README.md) |
+| UC-02 What-If Scenario Editor | [`uc02_what_if_scenario/README.md`](src/motion/application/use_cases/uc02_what_if_scenario/README.md) |
+| UC-03 Infrastructure Event Simulation | [`uc03_infrastructure_event_simulation/README.md`](src/motion/application/use_cases/uc03_infrastructure_event_simulation/README.md) |
+| KPI and heatmap methodology shared by UC-02/UC-03 | [`docs/scenario-kpis.md`](docs/scenario-kpis.md) |
+| Evidence, dependencies and gaps per UC | [`docs/use-cases.md`](docs/use-cases.md) |
+
+UC-02 and UC-03 are not fully automatic: between `stage` and `apply` a human
+edits the staged `.osm` file in an external editor such as
+[JOSM](https://josm.openstreetmap.org/). MOTION does not edit map geometry
+itself, and `apply` refuses to continue until the file's checksum changes.
+
+### Verifying the installation
+
+These two commands need neither credentials nor CARLA, and confirm the package
+and its command surface are installed correctly:
 
 ```bash
 motion uc-status
 motion --help
-motion map --help
 ```
 
-Provision a named map directly from a centre/radius. This command needs network
-access to Overpass and a compatible CARLA Python API for Osm2Odr conversion:
-
-```bash
-motion map provision \
-  --name salerno \
-  --lat 40.6772 --lon 14.7604 --radius 400
-```
-
-Road selection additionally requires `HERE_API_KEY`:
-
-```bash
-motion map mirror-road \
-  --lat 40.6772 --lon 14.7604 --radius 400 --name salerno --geo
-```
-
-The full UC-01 flow also requires a reachable CARLA simulator:
-
-```bash
-motion mirror \
-  --lat 40.6772 --lon 14.7604 --radius 400 --name salerno --geo
-```
-
-Reuse the registered active map without another OSM/OpenDRIVE build:
-
-```bash
-motion mirror --skip-provision
-```
-
-Run one complete UC-01 integration tick without HERE or Overpass, using the
-registered active map, synthetic field-device readings and synthetic traffic
-payloads that match the HERE v7 subset consumed by this project:
-
-```bash
-motion mirror --offline --once
-```
-
-Offline mode still requires a reachable CARLA simulator. It does not construct
-an HTTP client, provision a map or accept road-selection coordinates. Synthetic
-flow payloads use the HERE `results`/`location`/`currentFlow` structure and pass
-through the production `HereTrafficProvider`, `TrafficParser` and
-`IncidentParser`; their values are artificial and are not evidence of live
-traffic conditions.
-
-Use `--once` for one refresh tick and `--check-calibration` or
-`--verify-calibration` for opt-in CARLA map checks. Live commands fail if their
-configured HERE, Overpass or CARLA boundary is unavailable.
+Every other command reaches an external boundary. Commands that select a road or
+read live traffic need `HERE_API_KEY`; commands that build or convert a map also
+need network access to Overpass and the CARLA Python API; commands that simulate
+need a reachable CARLA simulator as well. Each fails with its own message when
+the boundary it needs is unavailable.
 
 ## CLI reference
 
@@ -306,6 +318,12 @@ configured HERE, Overpass or CARLA boundary is unavailable.
 | `motion map patch-overflow PATH` | Clamp overflowing objects. |
 | `motion map convert-active` | Reconvert the registered OSM map. |
 | `motion mirror` | Execute UC-01; `--offline` runs against the active map without HERE/Overpass. |
+| `motion scenario stage` | UC-02: propose a road, provision its baseline map and stage it for external editing. |
+| `motion scenario apply SCENARIO_ID` | UC-02: convert/repair the edited map (requires an actual edit). |
+| `motion scenario simulate SCENARIO_ID` | UC-02: simulate the modified map and report the measured KPI delta. |
+| `motion infra-event stage` | UC-03: same as `scenario stage`, UC-03 modification vocabulary. |
+| `motion infra-event apply SCENARIO_ID` | UC-03: same as `scenario apply`. |
+| `motion infra-event simulate SCENARIO_ID` | UC-03: measured corridor KPI delta plus a rendered congestion heatmap. |
 | `motion here verify-archive PATH` | Verify archived snapshot hashes. |
 | `motion telemetry collect` | Collect CARLA vehicle telemetry. |
 | `motion dataset build` | Build one enriched behavioral dataset from explicit CSVs. |
@@ -358,11 +376,12 @@ of the historical estimator in [docs/model-card.md](docs/model-card.md).
 
 ## Testing and quality gates
 
-To run locally the checks used by the native CI job:
+To run locally the checks used by the native CI job (`viz` is included so the
+UC-03 heatmap-rendering test runs too):
 
 ```bash
 python -m pip install --constraint constraints.txt setuptools wheel
-python -m pip install --no-build-isolation --constraint constraints.txt --editable ".[dev,ml]"
+python -m pip install --no-build-isolation --constraint constraints.txt --editable ".[dev,ml,viz]"
 python -m pip check
 python -m ruff check src tests .github/scripts
 python -m ruff format --check src tests .github/scripts
@@ -379,8 +398,11 @@ docker compose --profile test run --rm --no-deps motion-test
 ```
 
 Characterization tests lock the legacy numerical outputs. Unit tests exercise
-domain and application contracts with fake CARLA objects; integration tests
-cover filesystem, data and model persistence without live services. CI runs the
+domain and application contracts with fake CARLA objects, including the
+UC-02/UC-03 scenario-workflow, KPI, heatmap and CLI wiring tests under
+`tests/unit/application`, `tests/unit/domain` and `tests/unit/config` (shared
+fakes live in `tests/support`); integration tests cover filesystem, data and
+model persistence without live services. CI runs the
 native gate and validates the Compose model, CLI and offline container suite on
 Linux amd64 and arm64. The amd64 job also imports the optional CARLA client.
 Neither path contacts CARLA, HERE or Overpass. See
@@ -391,12 +413,12 @@ matrix](docs/non-regression.md).
 
 | Path | Contents | Version-control policy |
 |---|---|---|
-| `var/runtime/` | Active-map state. | Generated, ignored. |
-| `data/maps/` | Provisioned OSM/OpenDRIVE maps. | Generated, ignored. |
+| `var/runtime/` | Active-map state and, under `scenarios/`, one UC-02/UC-03 `ScenarioRecord` per scenario. | Generated, ignored. |
+| `data/maps/` | Provisioned OSM/OpenDRIVE maps, including UC-02/UC-03 `<baseline>__scenario-<id>` editable copies and variants. | Generated, ignored. |
 | `data/telemetry/` | Raw/enriched CSV sessions. | Generated, ignored. |
 | `artifacts/here/` | Optional HERE evidence archives. | Generated, ignored; provider terms apply. |
 | `artifacts/models/` | Model files with metadata/checksum sidecars. | Generated, ignored. |
-| `outputs/` | Inference summaries and reports. | Generated, ignored. |
+| `outputs/` | Inference summaries and reports, including UC-03 congestion-heatmap PNGs under `scenarios/`. | Generated, ignored. |
 | `data/reference/` | Curated map inputs with provenance. | Tracked intentionally. |
 | `artifacts/reference/models/` | Pinned legacy model and machine-readable provenance. | Tracked intentionally. |
 
@@ -410,7 +432,12 @@ account and service terms.
   environments and were not executed by the offline quality gate.
 - The field-device provider is synthetic; no production device connector or
   governance dashboard is present.
-- UC-02–UC-07 are documented research directions and have no implementation.
+- UC-02/UC-03 stage/apply external map editing manually (e.g. in JOSM) rather
+  than through an in-app editor, and reuse UC-01's own mirroring loop instead
+  of CARLA ScenarioRunner; see [docs/scenario-kpis.md](docs/scenario-kpis.md)
+  for which modification kinds actually move the measured KPIs versus only the
+  policy-predicted UC-03 heatmap.
+- UC-04–UC-07 are documented research directions and have no implementation.
 - UC-05 ownership/method and several UC-07 delivery semantics remain unresolved.
 - Session-free legacy datasets retain a row-level split for compatibility; their
   evaluation is more leakage-prone and is labeled accordingly.
@@ -427,3 +454,5 @@ account and service terms.
 - [HERE Traffic API](https://docs.here.com/traffic-api/docs/introduction-to-here-traffic-api-v7)
 - [OpenStreetMap](https://www.openstreetmap.org/copyright) and
   [Overpass API](https://wiki.openstreetmap.org/wiki/Overpass_API)
+- [JOSM](https://josm.openstreetmap.org/) — the reference external OSM editor
+  for the UC-02/UC-03 map-edit step (any editor producing valid OSM XML works)

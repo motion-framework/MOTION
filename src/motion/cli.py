@@ -12,7 +12,6 @@ from typing import TYPE_CHECKING
 
 from motion.config.runtime_state import (
     ActiveMapState,
-    ActiveMapStateRepository,
     RuntimeStateError,
     load_active_map_state,
 )
@@ -24,6 +23,7 @@ if TYPE_CHECKING:
         MapProvisioningService,
         ProvisioningResult,
     )
+    from motion.config.scenario_state import ScenarioRecord
     from motion.domain.maps import MapProfile
     from motion.ports.traffic import TrafficDataProvider
 
@@ -187,7 +187,75 @@ def build_parser() -> argparse.ArgumentParser:
     )
     calibration.add_argument("--visual", action="store_true")
     calibration.set_defaults(handler=_handle_calibration)
+
+    scenario = subcommands.add_parser("scenario", help="UC-02 what-if scenario tools.")
+    scenario_commands = scenario.add_subparsers(dest="scenario_command", required=True)
+    scenario_stage = scenario_commands.add_parser(
+        "stage", help="Propose an area, provision the baseline map and stage it for editing."
+    )
+    _add_scenario_stage_arguments(scenario_stage)
+    scenario_stage.add_argument("--modified-speed-limit-kmh", type=float)
+    scenario_stage.set_defaults(handler=_handle_scenario_stage)
+    scenario_apply = scenario_commands.add_parser(
+        "apply", help="Convert and repair the edited map (requires an actual edit)."
+    )
+    scenario_apply.add_argument("scenario_id")
+    scenario_apply.set_defaults(handler=_handle_scenario_apply)
+    scenario_simulate = scenario_commands.add_parser(
+        "simulate", help="Simulate the modified map and report the baseline KPI delta."
+    )
+    _add_scenario_simulate_arguments(scenario_simulate)
+    scenario_simulate.set_defaults(handler=_handle_scenario_simulate)
+
+    infra_event = subcommands.add_parser("infra-event", help="UC-03 infrastructure event tools.")
+    infra_event_commands = infra_event.add_subparsers(dest="infra_event_command", required=True)
+    infra_event_stage = infra_event_commands.add_parser(
+        "stage", help="Propose an area, provision the baseline map and stage it for editing."
+    )
+    _add_scenario_stage_arguments(infra_event_stage)
+    infra_event_stage.set_defaults(handler=_handle_infra_event_stage)
+    infra_event_apply = infra_event_commands.add_parser(
+        "apply", help="Convert and repair the edited map (requires an actual edit)."
+    )
+    infra_event_apply.add_argument("scenario_id")
+    infra_event_apply.set_defaults(handler=_handle_infra_event_apply)
+    infra_event_simulate = infra_event_commands.add_parser(
+        "simulate",
+        help="Simulate the modified map and report the corridor KPI delta and heatmap.",
+    )
+    _add_scenario_simulate_arguments(infra_event_simulate)
+    infra_event_simulate.add_argument("--heatmap-output", type=Path)
+    infra_event_simulate.set_defaults(handler=_handle_infra_event_simulate)
     return parser
+
+
+def _add_scenario_stage_arguments(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument("--lat", type=float, required=True)
+    parser.add_argument("--lon", type=float, required=True)
+    parser.add_argument("--radius", type=float, default=DEFAULT_CENTER_RADIUS_METERS)
+    parser.add_argument("--name", default="here_road")
+    parser.add_argument("--geo", action="store_true")
+    parser.add_argument("--modification-kind", required=True, dest="modification_kind")
+    parser.add_argument("--notes", default="")
+
+
+def _add_scenario_simulate_arguments(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument("scenario_id")
+    parser.add_argument("--ticks", type=int, default=1)
+    parser.add_argument(
+        "--settle-seconds",
+        type=float,
+        default=20.0,
+        dest="settle_seconds",
+        help=(
+            "Let the simulation run this long after the last tick before measuring speed, "
+            "so the figure is cruising traffic rather than vehicles still accelerating "
+            "away from their spawn points. 0 measures immediately."
+        ),
+    )
+    parser.add_argument("--offline", action="store_true")
+    parser.add_argument("--carla-exe", type=Path)
+    parser.add_argument("--grams-co2-per-km", type=float, dest="grams_co2_per_km")
 
 
 def _add_area_arguments(parser: argparse.ArgumentParser) -> None:
@@ -257,24 +325,9 @@ def _handle_uc_status(args: argparse.Namespace, _settings: AppSettings) -> int:
 
 
 def _map_provisioning_service(settings: AppSettings) -> MapProvisioningService:
-    from motion.application.map_provisioning import MapProvisioningService
-    from motion.infrastructure.maps.artifacts import LocalMapArtifactProcessor
-    from motion.infrastructure.maps.converter import (
-        CarlaOsmToOpenDriveConverter,
-    )
-    from motion.infrastructure.osm.downloader import OsmDownloader
+    from motion.application.scenario_workflow import build_map_provisioning_service
 
-    return MapProvisioningService(
-        downloader=OsmDownloader(
-            endpoints=settings.osm.endpoints,
-            contact_email=settings.osm.contact_email,
-            timeout_seconds=settings.osm.request_timeout_seconds,
-        ),
-        converter=CarlaOsmToOpenDriveConverter(),
-        artifact_processor=LocalMapArtifactProcessor(),
-        state_repository=ActiveMapStateRepository(settings.paths.active_map_state),
-        project_root=settings.paths.root,
-    )
+    return build_map_provisioning_service(settings)
 
 
 def _print_provisioning_result(result: ProvisioningResult) -> None:
@@ -506,18 +559,11 @@ def _build_traffic_provider(
     road_filter: str,
     offline: bool,
 ) -> TrafficDataProvider:
-    if offline:
-        from motion.infrastructure.offline import build_offline_provider
+    from motion.application.traffic_providers import build_traffic_provider
 
-        LOGGER.info(
-            "Offline mode enabled: HERE and Overpass acquisition are disabled; "
-            "synthetic traffic will use the HERE v7 payload and parser contract."
-        )
-        return build_offline_provider(profile, profile.device_registry)
-
-    from motion.infrastructure.here.factory import build_here_provider
-
-    return build_here_provider(settings, profile, road_filter=road_filter)
+    return build_traffic_provider(
+        settings=settings, profile=profile, road_filter=road_filter, offline=offline
+    )
 
 
 def _run_uc01(
@@ -676,6 +722,129 @@ def _handle_calibration(args: argparse.Namespace, settings: AppSettings) -> int:
 
     state = load_active_map_state(paths=settings.paths)
     return run_calibration(settings=settings, state=state, visual=args.visual)
+
+
+def _handle_scenario_stage(args: argparse.Namespace, settings: AppSettings) -> int:
+    from motion.application.use_cases.uc02_what_if_scenario.service import (
+        WhatIfScenarioService,
+    )
+
+    record = WhatIfScenarioService(settings=settings).stage(
+        lat=args.lat,
+        lon=args.lon,
+        radius_meters=args.radius,
+        map_name=args.name,
+        geo=args.geo,
+        modification_kind=args.modification_kind,
+        notes=args.notes,
+        modified_speed_limit_kmh=args.modified_speed_limit_kmh,
+    )
+    _print_staged_scenario(record)
+    return 0
+
+
+def _handle_scenario_apply(args: argparse.Namespace, settings: AppSettings) -> int:
+    from motion.application.use_cases.uc02_what_if_scenario.service import (
+        WhatIfScenarioService,
+    )
+
+    record = WhatIfScenarioService(settings=settings).apply(args.scenario_id)
+    _print_applied_scenario(record)
+    return 0
+
+
+def _handle_scenario_simulate(args: argparse.Namespace, settings: AppSettings) -> int:
+    from motion.application.use_cases.uc02_what_if_scenario.reporting import (
+        ScenarioDeltaReporter,
+    )
+    from motion.application.use_cases.uc02_what_if_scenario.service import (
+        WhatIfScenarioService,
+    )
+
+    settings = _settings_with_carla_exe(settings, args.carla_exe)
+    report = WhatIfScenarioService(settings=settings).simulate(
+        args.scenario_id,
+        offline=args.offline,
+        ticks=args.ticks,
+        settle_seconds=args.settle_seconds,
+        grams_per_vehicle_km=_resolved_grams_co2_per_km(args.grams_co2_per_km),
+    )
+    ScenarioDeltaReporter().report(report)
+    return 0
+
+
+def _handle_infra_event_stage(args: argparse.Namespace, settings: AppSettings) -> int:
+    from motion.application.use_cases.uc03_infrastructure_event_simulation.service import (
+        InfrastructureEventService,
+    )
+
+    record = InfrastructureEventService(settings=settings).stage(
+        lat=args.lat,
+        lon=args.lon,
+        radius_meters=args.radius,
+        map_name=args.name,
+        geo=args.geo,
+        modification_kind=args.modification_kind,
+        notes=args.notes,
+    )
+    _print_staged_scenario(record)
+    return 0
+
+
+def _handle_infra_event_apply(args: argparse.Namespace, settings: AppSettings) -> int:
+    from motion.application.use_cases.uc03_infrastructure_event_simulation.service import (
+        InfrastructureEventService,
+    )
+
+    record = InfrastructureEventService(settings=settings).apply(args.scenario_id)
+    _print_applied_scenario(record)
+    return 0
+
+
+def _handle_infra_event_simulate(args: argparse.Namespace, settings: AppSettings) -> int:
+    from motion.application.use_cases.uc03_infrastructure_event_simulation.reporting import (
+        InfrastructureReportPrinter,
+    )
+    from motion.application.use_cases.uc03_infrastructure_event_simulation.service import (
+        InfrastructureEventService,
+    )
+
+    settings = _settings_with_carla_exe(settings, args.carla_exe)
+    report = InfrastructureEventService(settings=settings).simulate(
+        args.scenario_id,
+        offline=args.offline,
+        ticks=args.ticks,
+        settle_seconds=args.settle_seconds,
+        heatmap_output=args.heatmap_output,
+        grams_per_vehicle_km=_resolved_grams_co2_per_km(args.grams_co2_per_km),
+    )
+    InfrastructureReportPrinter().report(report)
+    return 0
+
+
+def _settings_with_carla_exe(settings: AppSettings, carla_exe: Path | None) -> AppSettings:
+    if carla_exe is None:
+        return settings
+    return replace(settings, carla=replace(settings.carla, executable_path=carla_exe))
+
+
+def _resolved_grams_co2_per_km(grams_co2_per_km: float | None) -> float:
+    from motion.domain.kpi import DEFAULT_GRAMS_CO2_PER_VEHICLE_KM
+
+    return DEFAULT_GRAMS_CO2_PER_VEHICLE_KM if grams_co2_per_km is None else grams_co2_per_km
+
+
+def _print_staged_scenario(record: ScenarioRecord) -> None:
+    print(f"Scenario staged: {record.scenario_id} ({record.use_case_id})")
+    print(f"Modification: {record.modification.kind} -- {record.modification.notes or 'no notes'}")
+    print("Edit the staged OSM file with an external tool (e.g. JOSM), save it, then run:")
+    print(f"  motion scenario apply {record.scenario_id}   (or: infra-event apply)")
+    print(f"Editable file: {record.editable_osm_path}")
+
+
+def _print_applied_scenario(record: ScenarioRecord) -> None:
+    print(f"Scenario ready: {record.scenario_id}")
+    print(f"Variant OpenDRIVE: {record.variant_xodr_path}")
 
 
 if __name__ == "__main__":

@@ -8,6 +8,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 from motion.config.settings import CarlaSettings
+from motion.infrastructure.carla.adapter import CarlaTrafficSimulator
 from motion.infrastructure.carla.api import (
     CarlaUnavailableError,
     load_carla_module,
@@ -28,14 +29,18 @@ class FakeLocation:
 
 
 class FakeActor:
-    def __init__(self, actor_id, *, alive=True, location=None):
+    def __init__(self, actor_id, *, alive=True, location=None, velocity=None):
         self.id = actor_id
         self.is_alive = alive
         self._location = location or FakeLocation()
+        self._velocity = velocity or FakeLocation()
         self.autopilot_calls = []
 
     def get_location(self):
         return self._location
+
+    def get_velocity(self):
+        return self._velocity
 
     def set_autopilot(self, enabled, port):
         self.autopilot_calls.append((enabled, port))
@@ -93,6 +98,17 @@ class FakePinner:
     def pin(self, vehicle, points):
         del vehicle, points
         return True
+
+
+class FakeTrafficManager:
+    def set_synchronous_mode(self, enabled):
+        del enabled
+
+    def set_global_distance_to_leading_vehicle(self, distance_meters):
+        del distance_meters
+
+    def global_percentage_speed_difference(self, percentage):
+        del percentage
 
 
 class FakeClient:
@@ -236,6 +252,37 @@ class CarlaBoundaryTest(unittest.TestCase):
         self.assertEqual(commander.disabled, [20])
         self.assertTrue(external.is_alive)
         self.assertEqual(registry.ids(), set())
+
+    def _build_simulator(self, actors=()):
+        world = FakeWorld(list(actors))
+        client = FakeClient()
+        carla_module = FakeCarlaModule(client)
+        return CarlaTrafficSimulator(
+            client=client,
+            world=world,
+            traffic_manager=FakeTrafficManager(),
+            carla_module=carla_module,
+            traffic_manager_port=8000,
+            speed_limit_kmh=50.0,
+        )
+
+    def test_average_speed_is_none_with_no_owned_vehicles(self):
+        simulator = self._build_simulator()
+
+        self.assertIsNone(simulator.average_speed_kmh())
+
+    def test_average_speed_measures_only_owned_live_vehicles(self):
+        # 3-4-0 velocity vector -> sqrt(3^2+4^2) = 5 m/s -> 18.0 km/h.
+        owned_fast = FakeActor(1, velocity=FakeLocation(3.0, 4.0, 0.0))
+        # 6-8-0 velocity vector -> sqrt(6^2+8^2) = 10 m/s -> 36.0 km/h.
+        owned_slow = FakeActor(2, velocity=FakeLocation(6.0, 8.0, 0.0))
+        unowned = FakeActor(3, velocity=FakeLocation(100.0, 0.0, 0.0))
+        simulator = self._build_simulator([owned_fast, owned_slow, unowned])
+        simulator._registry.register(owned_fast)
+        simulator._registry.register(owned_slow)
+
+        self.assertAlmostEqual(simulator.average_speed_kmh(), (18.0 + 36.0) / 2, places=6)
+        self.assertEqual(simulator.owned_vehicle_count(), 2)
 
 
 if __name__ == "__main__":
