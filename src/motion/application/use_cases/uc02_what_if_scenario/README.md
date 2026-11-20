@@ -45,7 +45,7 @@ time -- not on anything MOTION computes analytically).
 |---|---|---|
 | `LANE_CLOSURE` | A lane is closed on the edited map. | No -- geometry only; effect is realized by CARLA at simulation time. |
 | `ROAD_CLOSURE` | A road/segment is closed on the edited map. | No -- same as above. |
-| `SPEED_LIMIT_CHANGE` | The area's speed limit changes. | **Yes** -- pass `--modified-speed-limit-kmh`; it replaces the map's speed limit for the scenario run's `SpeedMirrorPolicy`. |
+| `SPEED_LIMIT_CHANGE` | The area's speed limit changes. | **Yes** -- `--modified-speed-limit-kmh` is **required**; it replaces the map's speed limit for the scenario run's `SpeedMirrorPolicy`. |
 | `SIGNAL_ADDED` | A traffic signal is added on the edited map. | No. |
 | `SIGNAL_REMOVED` | A traffic signal is removed on the edited map. | No. |
 | `EVENT_DIVERSION` | Traffic is diverted for an event (concert, demonstration, ...). | No. |
@@ -55,6 +55,12 @@ time -- not on anything MOTION computes analytically).
 (only the speed limit, today). Every other kind is recorded as descriptive
 metadata on the scenario record; its real-world effect only shows up in the
 measured KPIs to the extent CARLA's simulation reacts to your edited map.
+
+`stage` checks this before provisioning anything: `SPEED_LIMIT_CHANGE` without
+`--modified-speed-limit-kmh` is rejected (it would silently keep the baseline
+limit and compare the map against itself), and so is
+`--modified-speed-limit-kmh` with any other kind (it would mix a speed change
+into, say, a lane closure's KPI delta).
 
 ## Step-by-step usage
 
@@ -172,6 +178,11 @@ holds this same data as JSON, at `var/runtime/scenarios/<id>.json`.
 
 ## Troubleshooting
 
+- **`stage` fails with "SPEED_LIMIT_CHANGE requires the new limit"**: add
+  `--modified-speed-limit-kmh <value>`.
+- **`stage` fails with "--modified-speed-limit-kmh only applies to
+  SPEED_LIMIT_CHANGE"**: drop the option, or stage a separate
+  `SPEED_LIMIT_CHANGE` scenario if you also want to test a new limit.
 - **`apply` fails with "No edit detected"**: the editable OSM file's SHA-256
   still matches what was staged. You need to actually save a change in your
   editor first.

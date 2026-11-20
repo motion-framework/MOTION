@@ -331,3 +331,32 @@ def test_infra_event_simulate_handler_forwards_heatmap_output(monkeypatch, tmp_p
 
     assert captured["scenario_id"] == "sid-7"
     assert captured["heatmap_output"] == heatmap_path
+
+
+def test_infra_event_simulate_exits_non_zero_when_only_the_image_failed(
+    monkeypatch, capsys
+) -> None:
+    from motion.application.use_cases.uc03_infrastructure_event_simulation import (
+        service as uc03_service,
+    )
+    from motion.domain.heatmap import CongestionHeatmap
+    from motion.domain.kpi import KpiDelta, KpiSnapshot
+
+    def fake_simulate(self, scenario_id, **_kwargs):
+        zero = KpiSnapshot(0.0, 0.0, 0.0, 0, 0.0)
+        return uc03_service.InfrastructureSimulationReport(
+            scenario_id=scenario_id,
+            baseline=zero,
+            scenario=zero,
+            delta=KpiDelta(0.0, 0.0, 0.0),
+            ticks_run=1,
+            heatmap=CongestionHeatmap(cells=()),
+            heatmap_image_path="",
+            heatmap_error="HeatmapRenderingError: matplotlib is required",
+        )
+
+    monkeypatch.setattr(uc03_service.InfrastructureEventService, "simulate", fake_simulate)
+
+    args = build_parser().parse_args(["infra-event", "simulate", "sid-8"])
+    assert cli._handle_infra_event_simulate(args, _fake_settings()) == 1
+    assert "image NOT RENDERED" in capsys.readouterr().out

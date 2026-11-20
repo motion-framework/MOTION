@@ -233,3 +233,107 @@ def test_simulate_reports_measured_corridor_kpi_delta(tmp_path, monkeypatch) -> 
     )
     assert report.delta == KpiDelta.between(report.baseline, report.scenario)
     assert fake_simulator.closed is True
+
+
+class FailingRenderer:
+    def __init__(self, error: Exception) -> None:
+        self.error = error
+        self.calls = 0
+
+    def __call__(self, heatmap, output_path, title):
+        self.calls += 1
+        raise self.error
+
+
+def test_simulate_keeps_the_kpis_when_heatmap_rendering_fails(tmp_path, monkeypatch) -> None:
+    from motion.infrastructure.reporting.heatmap import HeatmapRenderingError
+
+    settings, record = _ready_record(tmp_path, monkeypatch)
+    here_segment = segment(
+        length_m=1000.0, speed_kmh=36.0, jam_factor=4.0, shape_points=IN_BBOX_SHAPE
+    )
+    monkeypatch.setattr(
+        uc03_service,
+        "build_traffic_provider",
+        lambda **_kwargs: FakeTrafficProvider([here_segment]),
+    )
+    fake_simulator = FakeSimulator(average_speed_kmh=18.0)
+    renderer = FailingRenderer(HeatmapRenderingError("matplotlib is required"))
+
+    report = uc03_service.InfrastructureEventService(settings=settings).simulate(
+        record.scenario_id,
+        offline=True,
+        ticks=1,
+        simulator_factory=lambda _profile: fake_simulator,
+        renderer=renderer,
+    )
+
+    assert renderer.calls == 1
+    assert report.heatmap_error == "HeatmapRenderingError: matplotlib is required"
+    assert report.heatmap_image_path == ""
+    assert report.scenario == snapshot_from_measured(
+        vehicle_count=fake_simulator.vehicle_count,
+        average_speed_kmh=18.0,
+        distance_km=report.baseline.distance_km,
+    )
+    assert fake_simulator.closed is True
+
+    reloaded = ScenarioStateRepository(settings.paths.scenarios).load(record.scenario_id)
+    assert reloaded.status is ScenarioStatus.SIMULATED
+    assert reloaded.heatmap_path == ""
+    assert reloaded.kpi_report is not None
+    assert reloaded.kpi_report["heatmap_error"] == report.heatmap_error
+
+
+def test_simulate_reports_an_empty_heatmap_as_an_image_error(tmp_path, monkeypatch) -> None:
+    settings, record = _ready_record(tmp_path, monkeypatch)
+    outside_map = segment(shape_points=((41.0, 15.0), (41.001, 15.001)))
+    monkeypatch.setattr(
+        uc03_service,
+        "build_traffic_provider",
+        lambda **_kwargs: FakeTrafficProvider([outside_map]),
+    )
+
+    report = uc03_service.InfrastructureEventService(settings=settings).simulate(
+        record.scenario_id,
+        offline=True,
+        ticks=1,
+        simulator_factory=lambda _profile: FakeSimulator(average_speed_kmh=20.0),
+    )
+
+    assert report.heatmap.cells == ()
+    assert report.heatmap_error.startswith("HeatmapRenderingError: ")
+    assert report.heatmap_image_path == ""
+    reloaded = ScenarioStateRepository(settings.paths.scenarios).load(record.scenario_id)
+    assert reloaded.status is ScenarioStatus.SIMULATED
+
+
+def test_report_printer_separates_an_image_error_from_the_kpis() -> None:
+    import io
+
+    from motion.application.use_cases.uc03_infrastructure_event_simulation.reporting import (
+        InfrastructureReportPrinter,
+    )
+    from motion.domain.heatmap import CongestionHeatmap
+    from motion.domain.kpi import KpiSnapshot
+
+    snapshot = KpiSnapshot(100.0, 3.0, 500.0, 6, 2.0)
+    report = uc03_service.InfrastructureSimulationReport(
+        scenario_id="sid-uc03",
+        baseline=snapshot,
+        scenario=snapshot,
+        delta=KpiDelta.between(snapshot, snapshot),
+        ticks_run=1,
+        heatmap=CongestionHeatmap(cells=()),
+        heatmap_image_path="",
+        heatmap_error="HeatmapRenderingError: matplotlib is required",
+    )
+    stream = io.StringIO()
+
+    InfrastructureReportPrinter(stream=stream).report(report)
+
+    output = stream.getvalue()
+    assert "Corridor travel time : 100.0s -> 100.0s" in output
+    assert "image NOT RENDERED" in output
+    assert "Rendering error    : HeatmapRenderingError: matplotlib is required" in output
+    assert "the KPIs above are valid" in output

@@ -70,6 +70,9 @@ class InfrastructureSimulationReport:
     ticks_run: int
     heatmap: CongestionHeatmap
     heatmap_image_path: str
+    # Empty when the image was rendered. Otherwise the rendering failure, kept
+    # apart from the simulation outcome: the KPIs above are still valid.
+    heatmap_error: str = ""
 
 
 class InfrastructureEventService:
@@ -211,8 +214,13 @@ class InfrastructureEventService:
         image_path = heatmap_output or self._settings.paths.scenario_outputs / (
             f"{scenario_id}_heatmap.png"
         )
-        render = renderer or _default_renderer()
-        render(heatmap, image_path, f"UC-03 scenario {scenario_id}")
+        heatmap_error = _render_heatmap(
+            renderer or _default_renderer(),
+            heatmap,
+            image_path,
+            f"UC-03 scenario {scenario_id}",
+        )
+        rendered_path = "" if heatmap_error else str(image_path)
 
         report = InfrastructureSimulationReport(
             scenario_id=scenario_id,
@@ -221,14 +229,15 @@ class InfrastructureEventService:
             delta=KpiDelta.between(baseline_kpi, scenario_kpi),
             ticks_run=ticks,
             heatmap=heatmap,
-            heatmap_image_path=str(image_path),
+            heatmap_image_path=rendered_path,
+            heatmap_error=heatmap_error,
         )
         self._repository.save(
             replace(
                 record,
                 status=ScenarioStatus.SIMULATED,
                 kpi_report=_report_to_dict(report),
-                heatmap_path=str(image_path),
+                heatmap_path=rendered_path,
             )
         )
         return report
@@ -290,6 +299,32 @@ def _default_simulator_factory(
         return CarlaTrafficSimulator.from_profile(settings.carla, profile)
 
     return factory
+
+
+def _render_heatmap(
+    render: Callable[[CongestionHeatmap, Path, str], Path],
+    heatmap: CongestionHeatmap,
+    image_path: Path,
+    title: str,
+) -> str:
+    """Render the heatmap image; return the failure text, or "" on success.
+
+    Rendering runs after the CARLA simulation has already completed, so any
+    failure here (matplotlib missing, no segment inside the map, an unwritable
+    path, ...) concerns the image only. It is reported separately instead of
+    raised, so a completed simulation's KPIs are still saved and shown.
+    """
+
+    try:
+        render(heatmap, image_path, title)
+    except Exception as error:
+        logger.error(
+            "Congestion heatmap rendering failed; the simulation KPIs are unaffected (%s: %s)",
+            type(error).__name__,
+            error,
+        )
+        return f"{type(error).__name__}: {error}"
+    return ""
 
 
 def _default_renderer() -> Callable[[CongestionHeatmap, Path, str], Path]:

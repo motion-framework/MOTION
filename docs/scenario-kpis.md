@@ -73,7 +73,8 @@ parking or junction-topology representation. This has a direct, honest
 consequence for what a modification kind can change:
 
 - **UC-02's `SPEED_LIMIT_CHANGE`** is the one modification kind that feeds a
-  domain parameter directly: `--modified-speed-limit-kmh` replaces the
+  domain parameter directly: `--modified-speed-limit-kmh` (required for this
+  kind and rejected for every other) replaces the
   modified map's `speed_limit_kmh`, which `SpeedMirrorPolicy` reads when
   commanding vehicles. Its effect on the measured KPIs is real and
   analytically explainable.
