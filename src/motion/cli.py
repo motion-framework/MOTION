@@ -626,6 +626,8 @@ def _run_uc01(
             profile.name,
             device_registry=profile.device_registry,
             traffic_source_label="SYNTHETIC HERE-COMPATIBLE" if offline else "HERE",
+            # SyntheticDeviceProvider is the only field-device source today.
+            device_source_label="SYNTHETIC",
         ),
         update_interval_seconds=settings.mirror.update_interval_seconds,
     )
@@ -819,7 +821,8 @@ def _handle_infra_event_simulate(args: argparse.Namespace, settings: AppSettings
         grams_per_vehicle_km=_resolved_grams_co2_per_km(args.grams_co2_per_km),
     )
     InfrastructureReportPrinter().report(report)
-    return 0
+    # The KPIs are saved either way; a missing image is still a failed output.
+    return 1 if report.heatmap_error else 0
 
 
 def _settings_with_carla_exe(settings: AppSettings, carla_exe: Path | None) -> AppSettings:

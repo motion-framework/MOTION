@@ -49,7 +49,9 @@ What it does **not** do:
 
 - **Field devices are synthetic.** `SyntheticDeviceProvider` generates
   plausible count/speed readings at the registered device positions; there is
-  no adapter for a real production field-device feed yet.
+  no adapter for a real production field-device feed yet. The dashboard says
+  so (`FIELD DEVICES (SYNTHETIC)`), so these readings are never mistaken for
+  observations when they appear next to live HERE data.
 - **No governance dashboard.** The per-tick report is a console printout,
   not the web dashboard the use-case description refers to.
 - It mirrors **population and speed**, not individual vehicles: HERE gives
@@ -133,7 +135,7 @@ MOTION UC-01 | SALERNO DIGITAL TWIN
 Timestamp      : 2026-11-18 10:42:07
 Active vehicles: 34  |  Population target: 36
 ------------------------------------------------------------
-FIELD DEVICES:
+FIELD DEVICES (SYNTHETIC):
   SALERNO_001  (40.6768, 14.7581)  count=  9  speed= 27.4 km/h
   SALERNO_002  (40.6771, 14.7598)  count= 12  speed= 33.1 km/h
   ...

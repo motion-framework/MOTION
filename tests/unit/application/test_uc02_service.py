@@ -231,3 +231,38 @@ def test_simulate_uses_a_custom_co2_factor(tmp_path, monkeypatch) -> None:
     )
 
     assert report.baseline == snapshot_from_segments([here_segment], grams_per_vehicle_km=1.0)
+
+
+def _stage_without_provisioning(tmp_path, monkeypatch, **stage_options):
+    """Stage with a provisioning step that must never be reached."""
+
+    def fail_if_provisioned(**_kwargs):
+        raise AssertionError("invalid parameters must be rejected before provisioning")
+
+    monkeypatch.setattr(uc02_service, "propose_and_provision_baseline", fail_if_provisioned)
+    return uc02_service.WhatIfScenarioService(settings=load_settings(root=tmp_path)).stage(
+        lat=40.0,
+        lon=14.0,
+        radius_meters=200.0,
+        map_name="salerno",
+        geo=True,
+        scenario_id="sid-1",
+        **stage_options,
+    )
+
+
+def test_stage_requires_the_new_limit_for_a_speed_limit_change(tmp_path, monkeypatch) -> None:
+    with pytest.raises(ScenarioValidationError, match="requires the new limit"):
+        _stage_without_provisioning(tmp_path, monkeypatch, modification_kind="SPEED_LIMIT_CHANGE")
+
+    assert not (tmp_path / "var" / "runtime" / "scenarios").exists()
+
+
+def test_stage_rejects_a_speed_limit_for_any_other_kind(tmp_path, monkeypatch) -> None:
+    with pytest.raises(ScenarioValidationError, match="only applies to SPEED_LIMIT_CHANGE"):
+        _stage_without_provisioning(
+            tmp_path,
+            monkeypatch,
+            modification_kind="LANE_CLOSURE",
+            modified_speed_limit_kmh=30.0,
+        )

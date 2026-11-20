@@ -11,8 +11,8 @@ from .service import InfrastructureSimulationReport
 class InfrastructureReportPrinter:
     """Print corridor KPI delta, area CO2 delta and the heatmap image path."""
 
-    def __init__(self, *, stream: TextIO = sys.stdout) -> None:
-        self._stream = stream
+    def __init__(self, *, stream: TextIO | None = None) -> None:
+        self._stream = stream if stream is not None else sys.stdout
 
     def report(self, result: InfrastructureSimulationReport) -> None:
         write = self._stream.write
@@ -36,5 +36,10 @@ class InfrastructureReportPrinter:
             f"({result.delta.co2_grams:+.0f}g)\n"
         )
         write(f"Congestion heatmap   : {len(result.heatmap.cells)} segment(s), ")
-        write(f"image at {result.heatmap_image_path}\n")
+        if result.heatmap_error:
+            write("image NOT RENDERED\n")
+            write(f"  Rendering error    : {result.heatmap_error}\n")
+            write("  (simulation completed; the KPIs above are valid)\n")
+        else:
+            write(f"image at {result.heatmap_image_path}\n")
         write("=" * 60 + "\n\n")

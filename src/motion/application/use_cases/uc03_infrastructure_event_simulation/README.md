@@ -60,8 +60,8 @@ change a number with. They are recorded as descriptive metadata only.
 ## Step-by-step usage
 
 `stage` needs `HERE_API_KEY`; `apply` needs the CARLA Python API; `simulate`
-needs a reachable CARLA simulator **and** the `viz` extra installed
-(`pip install --editable ".[viz]"`) for heatmap rendering.
+needs a reachable CARLA simulator, plus the `viz` extra
+(`pip install --editable ".[viz]"`) to render the heatmap image.
 
 ### 1. Stage
 
@@ -118,9 +118,17 @@ Congestion heatmap   : 49 segment(s), image at outputs/scenarios/20260817-143012
 ## Troubleshooting
 
 - Everything in UC-02's troubleshooting section applies here too.
-- **`simulate` fails with a matplotlib/heatmap-rendering error**: install the
-  `viz` extra: `pip install --editable ".[viz]"`. Without it, `stage` and
-  `apply` still work; only heatmap rendering in `simulate` needs matplotlib.
+- **The report says `image NOT RENDERED`**: the simulation completed and its
+  KPIs are valid and saved (the scenario is `SIMULATED`); only the image
+  failed. The `Rendering error` line gives the cause and the command exits
+  with code 1. The usual causes:
+  - matplotlib is missing: install the `viz` extra,
+    `pip install --editable ".[viz]"`. `stage` and `apply` never need it.
+  - no HERE segment lies inside the map, so there is nothing to draw.
+  - the output path is not writable: check `--heatmap-output`.
+
+  Re-running `simulate` on the same scenario repeats the CARLA run and
+  renders the image again.
 - **The heatmap looks identical before/after**: expected for most
   modification kinds, for the reason explained above -- MOTION's allocation
   depends on the jam factor and the segment's in-map length, neither of which

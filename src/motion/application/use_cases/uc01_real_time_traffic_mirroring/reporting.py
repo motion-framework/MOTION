@@ -33,7 +33,14 @@ class NullTickReporter:
 
 
 class ConsoleDashboardReporter:
-    """Preserve the compact UC-01 dashboard emitted after every mirror tick."""
+    """Preserve the compact UC-01 dashboard emitted after every mirror tick.
+
+    Both input sections carry their origin: ``traffic_source_label`` names the
+    flow source (live HERE or the synthetic HERE-compatible provider) and
+    ``device_source_label`` names the field-device source, so synthetic
+    readings are never mistaken for observations when they appear next to
+    live HERE data.
+    """
 
     def __init__(
         self,
@@ -41,12 +48,14 @@ class ConsoleDashboardReporter:
         *,
         device_registry: dict[str, tuple[float, float]] | None = None,
         traffic_source_label: str = "HERE",
-        stream: TextIO = sys.stdout,
+        device_source_label: str = "",
+        stream: TextIO | None = None,
     ) -> None:
         self._map_name = map_name
         self._device_registry = dict(device_registry or {})
         self._traffic_source_label = traffic_source_label
-        self._stream = stream
+        self._device_source_label = device_source_label
+        self._stream = stream if stream is not None else sys.stdout
 
     def report(self, result: TickResult) -> None:
         write = self._stream.write
@@ -59,7 +68,12 @@ class ConsoleDashboardReporter:
             f"Active vehicles: {result.active_vehicle_count}  |  "
             f"Population target: {result.target_vehicle_count}\n"
         )
-        write("-" * 60 + "\nFIELD DEVICES:\n")
+        device_heading = (
+            f"FIELD DEVICES ({self._device_source_label})"
+            if self._device_source_label
+            else "FIELD DEVICES"
+        )
+        write("-" * 60 + f"\n{device_heading}:\n")
         for reading in result.readings:
             coordinates = self._device_registry.get(reading.device_id)
             coordinate_text = (

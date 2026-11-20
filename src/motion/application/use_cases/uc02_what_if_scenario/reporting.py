@@ -11,8 +11,8 @@ from .service import ScenarioSimulationReport
 class ScenarioDeltaReporter:
     """Print the baseline-vs-scenario KPI delta, styled like UC-01's dashboard."""
 
-    def __init__(self, *, stream: TextIO = sys.stdout) -> None:
-        self._stream = stream
+    def __init__(self, *, stream: TextIO | None = None) -> None:
+        self._stream = stream if stream is not None else sys.stdout
 
     def report(self, result: ScenarioSimulationReport) -> None:
         write = self._stream.write

@@ -45,7 +45,7 @@ from motion.domain.kpi import (
 from motion.domain.mirroring import SpeedMirrorPolicy
 from motion.domain.scenarios import ScenarioModification, ScenarioStatus, validate_modification_kind
 
-from .modifications import UC02_MODIFICATION_KINDS
+from .modifications import UC02_MODIFICATION_KINDS, validate_uc02_parameters
 
 if TYPE_CHECKING:
     from motion.config.paths import ProjectPaths
@@ -87,6 +87,7 @@ class WhatIfScenarioService:
         scenario_id: str | None = None,
     ) -> ScenarioRecord:
         kind = validate_modification_kind(modification_kind, UC02_MODIFICATION_KINDS)
+        validate_uc02_parameters(kind, modified_speed_limit_kmh)
         modification = ScenarioModification(
             kind=kind,
             notes=notes,
